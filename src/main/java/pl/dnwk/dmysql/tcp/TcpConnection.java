@@ -52,7 +52,11 @@ public class TcpConnection {
 //                s = new String(inputBytes.toArray(), StandardCharsets.UTF_8);
 //                Log.debug("Client: " + s);
 
-                handler.handle(inputBytes, outputBytes);
+                outputBytes.clear();
+                int shouldClose = handler.handle(inputBytes, outputBytes);
+                if(1 == shouldClose) {
+                    break;
+                }
 //                String r = new String(outputBytes.toArray(), StandardCharsets.UTF_8);
 //                Log.debug("Server: " + r);
 
@@ -61,16 +65,22 @@ public class TcpConnection {
                 Timer.stop("writeClient");
             }
 
-            handler.close();
-            socket.close();
-            Timer.stop("connection");
         } catch (IOException | InterruptedException e) {
             Log.error(e.getMessage());
+        } finally {
+            Timer.stop("connection");
+            try {
+                Log.debug("Close TCP connection " + socket);
+                handler.close();
+                socket.close();
+            } catch (IOException e) {
+                Log.error(e.getMessage());
+            }
+
         }
     }
 
-    public void close()
-    {
+    public void close() {
         this.connected = false;
     }
 
@@ -90,7 +100,7 @@ public class TcpConnection {
 
             return;
         }
-        bytes.append((byte)resp);
+        bytes.append((byte) resp);
 
         Timer.start("readClient");
 

@@ -6,7 +6,7 @@ public interface TcpConnectionHandler {
 
     void init(Bytes output);
 
-    void handle(Bytes input, Bytes output);
+    int handle(Bytes input, Bytes output);
 
     void close();
 }

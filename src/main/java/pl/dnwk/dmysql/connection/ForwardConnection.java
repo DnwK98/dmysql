@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ForwardConnection extends Connection implements TcpConnectionHandler {
 
@@ -36,7 +34,7 @@ public class ForwardConnection extends Connection implements TcpConnectionHandle
         }
     }
 
-    public void handle(Bytes input, Bytes output) {
+    public int handle(Bytes input, Bytes output) {
         try {
             Timer.start("writeServer");
             serverInput.write(input.toArray());
@@ -45,6 +43,8 @@ public class ForwardConnection extends Connection implements TcpConnectionHandle
         } catch (IOException | InterruptedException e) {
             Log.error(e.getMessage());
         }
+
+        return 0;
     }
 
     private void readBytes(Bytes bytes) throws IOException, InterruptedException {

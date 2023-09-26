@@ -27,13 +27,13 @@ public class TcpServer {
         this.port = port;
     }
 
-    public int run() {
+    public void run() {
         try {
             socket = new ServerSocket(port);
             Log.info("Server is listening on port " + port);
         } catch (IOException e) {
             Log.error("Failed to start listening on port " + port + " Error: " + e.getMessage());
-            return 1;
+            throw new RuntimeException(e);
         }
 
         socketThread = new Thread(() -> {
@@ -56,8 +56,6 @@ public class TcpServer {
             }
         });
         socketThread.start();
-
-        return 0;
     }
 
     public void stop() {
