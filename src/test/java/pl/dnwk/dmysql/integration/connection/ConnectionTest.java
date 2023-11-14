@@ -1,7 +1,8 @@
-package pl.dnwk.dmysql.connection;
+package pl.dnwk.dmysql.integration.connection;
 
 import org.junit.jupiter.api.Test;
-import pl.dnwk.dmysql.IntegrationTestCase;
+import pl.dnwk.dmysql.connection.Connection;
+import pl.dnwk.dmysql.integration.IntegrationTestCase;
 import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.config.element.NodeConfig;
 

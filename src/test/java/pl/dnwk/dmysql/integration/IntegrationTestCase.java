@@ -1,7 +1,8 @@
-package pl.dnwk.dmysql;
+package pl.dnwk.dmysql.integration;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import pl.dnwk.dmysql.Server;
 import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.config.element.NodeConfig;
 

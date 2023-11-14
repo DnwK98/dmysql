@@ -6,6 +6,7 @@ import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.connection.Connection;
 import pl.dnwk.dmysql.tcp.TcpServer;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,7 +51,7 @@ public class Server {
     public void stop() {
         Log.info("Stopping (" + connections.size() + ") connections...");
         synchronized (connections) {
-            for (Connection connection: connections) {
+            for (Connection connection: new ArrayList<>(connections)) {
                 connection.close();
             }
         }
