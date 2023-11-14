@@ -70,7 +70,7 @@ public class ParserTest extends UnitTestCase {
         assertEquals("owner", statement.fromClause.joins.get(0).table);
         assertEquals("o", statement.fromClause.joins.get(0).alias);
 
-        var condition = (ComparisonExpression) ((ConditionalPrimary) statement.fromClause.joins.get(0).condition).simpleExpression;
+        var condition = (ComparisonCondition) statement.fromClause.joins.get(0).condition;
         assertEquals("owner_id", ((PathExpression) condition.left).field);
         assertEquals("id", ((PathExpression) condition.right).field);
         assertEquals("=", condition.operator);
@@ -82,7 +82,7 @@ public class ParserTest extends UnitTestCase {
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
-        var comparison = ((ComparisonExpression) ((ConditionalPrimary) statement.whereClause.expression).simpleExpression);
+        var comparison = (ComparisonCondition) statement.whereClause.expression;
         assertEquals("owner", ((PathExpression) comparison.left).field);
         assertEquals("1", ((Literal) comparison.right).value);
     }
@@ -93,7 +93,7 @@ public class ParserTest extends UnitTestCase {
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
-        var inList = (InListExpression) ((ConditionalPrimary) statement.whereClause.expression).simpleExpression;
+        var inList = (InListCondition) statement.whereClause.expression;
 
         assertEquals("1", inList.literals.get(0).value);
         assertEquals("3", inList.literals.get(2).value);
@@ -105,8 +105,8 @@ public class ParserTest extends UnitTestCase {
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
-        var secondExpression = ((ConditionalPrimary) ((ConditionalTerm) statement.whereClause.expression).conditionalFactors.get(1)).simpleExpression;
-        var comparison = (ComparisonExpression) secondExpression;
+        var secondExpression = ((ConditionalTerm) statement.whereClause.expression).conditionalFactors.get(1);
+        var comparison = (ComparisonCondition) secondExpression;
 
         assertEquals("id", ((PathExpression) comparison.left).field);
         assertEquals("10", ((Literal) comparison.right).value);
@@ -119,8 +119,8 @@ public class ParserTest extends UnitTestCase {
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
-        var parenthesis = (ConditionalPrimary) ((ConditionalTerm) ((ConditionalExpression) statement.whereClause.expression).conditionalTerms.get(0)).conditionalFactors.get(1);
-        var firstInParenthesis = (ComparisonExpression) ((ConditionalPrimary) (((ConditionalExpression) parenthesis.conditionalExpression).conditionalTerms.get(0))).simpleExpression;
+        var parenthesis = (ConditionalExpression) ((ConditionalTerm) ((ConditionalExpression) statement.whereClause.expression).conditionalTerms.get(0)).conditionalFactors.get(1);
+        var firstInParenthesis = (ComparisonCondition) parenthesis.conditionalTerms.get(0);
 
         assertEquals("id", ((PathExpression) firstInParenthesis.left).field);
         assertEquals("2", ((Literal) firstInParenthesis.right).value);

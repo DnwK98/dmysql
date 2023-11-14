@@ -210,17 +210,15 @@ public class Parser {
     }
 
     private Conditional parseConditionalPrimary() {
-        var primary = new ConditionalPrimary();
-
         if(lexer.nextIs(T_OPEN_PARENTHESIS)) {
             lexer.match(T_OPEN_PARENTHESIS);
-            primary.conditionalExpression = parseConditionalExpression();
+            var expression = parseConditionalExpression();
             lexer.match(T_CLOSE_PARENTHESIS);
-            return primary;
+            return expression;
         }
 
-        primary.simpleExpression = parseSimpleConditionalExpression();
-        return primary;
+        return parseSimpleConditionalExpression();
+
     }
 
     private Conditional parseSimpleConditionalExpression() {
@@ -229,7 +227,7 @@ public class Parser {
 
         if(operator != null) {
             var right = parseScalarExpression();
-            return new ComparisonExpression(left, operator, right);
+            return new ComparisonCondition(left, operator, right);
         }
 
         boolean not = false;
@@ -245,7 +243,8 @@ public class Parser {
         if(lexer.nextIs(T_IN)) {
             lexer.match(T_IN);
             lexer.match(T_OPEN_PARENTHESIS);
-            var inExpression = new InListExpression();
+            var inExpression = new InListCondition();
+            inExpression.path = (PathExpression) left;
             inExpression.not = not;
 
             var inElement = parseScalarExpression();

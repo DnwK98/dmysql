@@ -34,14 +34,14 @@ public class LexerTest extends UnitTestCase {
         );
 
         for (String token: tokens) {
-            assertEquals(token, lexer.getToken().value);
             lexer.moveNext();
+            assertEquals(token, lexer.getToken().value);
         }
 
         lexer.reset();
         for (int tokenType: tokensTypes) {
-            assertEquals(tokenType, lexer.getToken().type);
             lexer.moveNext();
+            assertEquals(tokenType, lexer.getToken().type);
         }
     }
 
@@ -63,8 +63,8 @@ public class LexerTest extends UnitTestCase {
         );
 
         for (String token: tokens) {
-            assertEquals(token, lexer.getToken().value);
             lexer.moveNext();
+            assertEquals(token, lexer.getToken().value);
         }
     }
 
@@ -84,8 +84,8 @@ public class LexerTest extends UnitTestCase {
         );
 
         for (String token: tokens) {
-            assertEquals(token, lexer.getToken().value);
             lexer.moveNext();
+            assertEquals(token, lexer.getToken().value);
         }
     }
 
@@ -104,8 +104,8 @@ public class LexerTest extends UnitTestCase {
         );
 
         for (String token: tokens) {
-            assertEquals(token, lexer.getToken().value);
             lexer.moveNext();
+            assertEquals(token, lexer.getToken().value);
         }
     }
 }
