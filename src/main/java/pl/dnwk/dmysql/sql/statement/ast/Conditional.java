@@ -1,4 +1,6 @@
 package pl.dnwk.dmysql.sql.statement.ast;
 
-public interface Conditional {
+import java.io.Serializable;
+
+public interface Conditional extends Serializable {
 }

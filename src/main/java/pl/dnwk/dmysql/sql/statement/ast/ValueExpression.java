@@ -1,4 +1,6 @@
 package pl.dnwk.dmysql.sql.statement.ast;
 
-public interface ValueExpression {
+import java.io.Serializable;
+
+public interface ValueExpression extends Serializable {
 }

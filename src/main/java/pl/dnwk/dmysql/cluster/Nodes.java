@@ -17,7 +17,15 @@ public class Nodes {
         return connections.get(name);
     }
 
+    public Connection get(int id) {
+        return list().toArray(new Connection[16])[id];
+    }
+
     public List<Connection> list() {
         return new ArrayList<>(connections.values());
+    }
+
+    public List<String> names() {
+        return new ArrayList<>(connections.keySet());
     }
 }

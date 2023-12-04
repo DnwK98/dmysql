@@ -1,0 +1,239 @@
+package pl.dnwk.dmysql.sql.executor.select;
+
+import pl.dnwk.dmysql.cluster.Nodes;
+import pl.dnwk.dmysql.common.ArrayBuilder;
+import pl.dnwk.dmysql.common.DeepCopy;
+import pl.dnwk.dmysql.sharding.schema.DistributedSchema;
+import pl.dnwk.dmysql.sql.executor.select.aggregation.Aggregation;
+import pl.dnwk.dmysql.sql.executor.select.aggregation.AnyValue;
+import pl.dnwk.dmysql.sql.statement.SqlWalker;
+import pl.dnwk.dmysql.sql.statement.ast.*;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
+
+public class SelectExecutor {
+
+    private final DistributedSchema schema;
+    private final Nodes nodes;
+    private final SqlWalker sqlWalker = new SqlWalker();
+
+    public SelectExecutor(DistributedSchema schema, Nodes nodes) {
+        this.schema = schema;
+        this.nodes = nodes;
+    }
+
+    public Object[][] execute(SelectStatement originalStatement) {
+        try {
+            var statement = modifyAggregationStatement(originalStatement);
+            var result = ArrayBuilder.create2D();
+
+            // Get statements to execute on each node
+            HashMap<String, SelectStatement> nodesStatements = getNodesStatements(statement);
+
+            // Execute statements on nodes
+            for (String nodeName : nodesStatements.keySet()) {
+                SelectStatement nodeStatement = nodesStatements.get(nodeName);
+                String sql = sqlWalker.walkStatement(nodeStatement);
+                var nodeResponse = executeQuery(nodes.get(nodeName), sql);
+                result.addAll(nodeResponse);
+            }
+
+            // Group results
+            var resultArray = result.toArray();
+            if(originalStatement.groupByClause != null) {
+                resultArray = applyGroupBy(originalStatement, resultArray);
+            } else if(hasAggregation(statement)) {
+                resultArray = new Object[][]{applyAggregation(originalStatement, resultArray)};
+            }
+
+            // Order results
+            resultArray = applyOrderBy(originalStatement, resultArray);
+
+            return resultArray;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private HashMap<String, SelectStatement> getNodesStatements(SelectStatement statement) {
+        var map = new HashMap<String, SelectStatement>();
+
+        // Select table to check shard (from, join)
+        var shardTable = schema.get(statement.fromClause.table);
+        if (!shardTable.sharded) {
+            shardTable = null;
+            for (Join join : statement.fromClause.joins) {
+                shardTable = schema.get(join.table);
+                if (shardTable.sharded) {
+                    if(join.type.equals(Join.TYPE_LEFT)) {
+                        // There we try to LEFT JOIN table which is on one node to table which is on all shards.
+                        // It is possible but requires two queries:
+                        //   1) INNER JOIN - to all shards for all joined objects
+                        //   2) LEFT JOIN ON b.key = null - to random shard for all objects without left side only once
+                        // and then merge these responses with removal duplicates from second one.
+
+                        throw new RuntimeException("LEFT JOIN of sharded table to table on all shards is not supported yet.");
+                    }
+
+                    break;
+                } else {
+                    shardTable = null;
+                }
+            }
+        }
+
+        // If there is any shard, use random node
+        if (shardTable == null) {
+            String[] keys = nodes.names().toArray(new String[0]);
+            int randomKeyPos = new Random().nextInt(keys.length);
+            String key = keys[randomKeyPos];
+            map.put(key, statement);
+
+            return map;
+        }
+
+        // If there is shard table, parse where statements for all shards
+        // TODO: implement this. Now we pass statements to all shards
+        for (var nodeName : nodes.names()) {
+            var _statement = DeepCopy.copy(statement);
+            map.put(nodeName, _statement);
+        }
+
+        return map;
+    }
+
+    private static Object[][] applyGroupBy(SelectStatement statement, Object[][] result) {
+        var groupMap = new HashMap<String, ArrayList<Object[]>>();
+
+        for(var row: result) {
+            String groupHash = "|";
+            for(var groupItem: statement.groupByClause.items) {
+                if(groupItem instanceof Literal) {
+                    var g = Integer.parseInt(((Literal) groupItem).value) - 1;
+                    if(g < 0) {
+                        throw new RuntimeException("Group by column must be greater than 0");
+                    }
+                    groupHash += row[g] + "|";
+                } else {
+                    throw new RuntimeException("Grouping by column name not supported yet");
+                }
+            }
+
+            var grouped = groupMap.getOrDefault(groupHash, new ArrayList<>());
+            grouped.add(row);
+            groupMap.put(groupHash, grouped);
+        }
+
+        var groupedResults = new Object[groupMap.size()][statement.selectClause.selectExpressions.size()];
+        var i = 0;
+        for(var groupList: groupMap.values()) {
+            Object[][] group = groupList.toArray(new Object[groupList.size()][]);
+            groupedResults[i++] = applyAggregation(statement, group);
+        }
+
+        return groupedResults;
+    }
+
+    private static boolean hasAggregation(SelectStatement statement) {
+        for (var select : statement.selectClause.selectExpressions) {
+            if (select.expression instanceof Function) {
+                var f = (Function) select.expression;
+                if (Aggregation.map.containsKey(f.functionName.toUpperCase())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static Object[] applyAggregation(SelectStatement statement, Object[][] group) {
+        if(group.length == 0 ) {
+            return group;
+        }
+
+        var aggregated = DeepCopy.copy(group[0]); // Copy is not required there. Used only for function pureness.
+
+        var i = 0;
+        for(var columnDef: statement.selectClause.selectExpressions) {
+            var column = new Object[group.length];
+            var j = 0;
+            for(var row: group) {
+                column[j++] = row[i];
+            }
+
+            Aggregation aggregationAlgorithm = new AnyValue();
+            if (columnDef.expression instanceof Function) {
+                var f = (Function) columnDef.expression;
+                if (Aggregation.map.containsKey(f.functionName)) {
+                    aggregationAlgorithm = Aggregation.map.get(f.functionName);
+                }
+            }
+
+            aggregated[i] = aggregationAlgorithm.aggregate(column);
+
+            ++i;
+        }
+
+        return aggregated;
+    }
+
+    private static SelectStatement modifyAggregationStatement(SelectStatement originalStatement) {
+        var statement = DeepCopy.copy(originalStatement);
+        for (var select : statement.selectClause.selectExpressions) {
+            if(select.expression instanceof Function) {
+                var f = (Function) select.expression;
+                if(Aggregation.map.containsKey(f.functionName)) {
+                    select.expression = Aggregation.map.get(f.functionName).getExpression(f);
+                }
+            }
+        }
+
+        return statement;
+    }
+
+    private static Object[][] applyOrderBy(SelectStatement statement, Object[][] result) {
+        var orderByColumns = ArrayBuilder.create(new RowsComparator.ColumnDef[16]);
+        if(statement.orderByClause != null) {
+            for (OrderByItem orderByItem : statement.orderByClause.items) {
+                var columnPos = -1;
+                var descending = orderByItem.direction.equals(OrderByItem.DESC);
+
+                if (orderByItem.orderBy instanceof Literal) {
+                    columnPos = (Integer.parseInt(((Literal) orderByItem.orderBy).value) - 1);
+                } else {
+                    throw new RuntimeException("Ordering by column name not supported yet");
+                }
+
+                orderByColumns.add(new RowsComparator.ColumnDef(columnPos, descending));
+            }
+        }
+
+        if(orderByColumns.empty()) {
+            orderByColumns.add(new RowsComparator.ColumnDef(0));
+        }
+
+        result = DeepCopy.copy(result); // copy only for pureness.
+        Arrays.sort(result, new RowsComparator(orderByColumns.toArray()));
+
+        return result;
+    }
+
+    private static Object[][] executeQuery(Connection connection, String sql) {
+        try {
+            var result = connection.createStatement().executeQuery(sql);
+            var rowMapper = RowMapper.ofResult(result);
+            var rows = ArrayBuilder.create2D();
+
+            while (result.next()) {
+                rows.add(rowMapper.mapRow(result));
+            }
+
+            return rows.toArray();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

@@ -4,22 +4,23 @@ import pl.dnwk.dmysql.Server;
 import pl.dnwk.dmysql.cluster.Nodes;
 import pl.dnwk.dmysql.common.Bytes;
 import pl.dnwk.dmysql.common.Log;
+import pl.dnwk.dmysql.sql.executor.SqlExecutor;
 import pl.dnwk.dmysql.tcp.TcpConnectionHandler;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 public class Connection implements TcpConnectionHandler {
 
     private final Server server;
     private final Nodes nodes;
+    private final SqlExecutor sqlExecutor;
 
     public Connection(Server server) {
         Log.debug("Db connection created");
         this.server = server;
 
         this.nodes = server.getCluster().get();
+        this.sqlExecutor = new SqlExecutor(server.getDistributedSchema(), this.nodes);
     }
 
     @Override
@@ -50,26 +51,20 @@ public class Connection implements TcpConnectionHandler {
 
     public String executeSql(String sql) {
         try {
-            StringBuilder response = new StringBuilder();
-            for (java.sql.Connection c: nodes.list()) {
-                ResultSet results = c.createStatement().executeQuery(sql);
-                int columnCount = results.getMetaData().getColumnCount();
-                Log.info("Column count " + columnCount);
-                while (results.next()) {
-                    for (int i = 0; i < columnCount; ++i) {
-                        response.append(results.getString(i + 1));
-                        if(i + 1 < columnCount) {
-                            response.append(" | ");
-                        }
+            StringBuilder result = new StringBuilder(256);
+            Object[][] response = sqlExecutor.executeSql(sql);
+            for (var row : response) {
+                for(int i = 0; i < row.length; i++) {
+                    result.append(row[i]);
+                    if(i < row.length - 1) {
+                        result.append(" | ");
                     }
-
-                    response.append("\n");
+                    result.append("\n");
                 }
             }
 
-            return response.toString();
-
-        } catch (SQLException e) {
+            return result.toString();
+        } catch (Exception e) {
             Log.error("Invalid SQL: " + sql + "Error: " + e.getMessage());
             return "Error: " + e.getMessage();
         }

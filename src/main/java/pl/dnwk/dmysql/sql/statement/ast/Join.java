@@ -1,6 +1,8 @@
 package pl.dnwk.dmysql.sql.statement.ast;
 
-public class Join {
+import java.io.Serializable;
+
+public class Join implements Serializable {
     public static final String TYPE_INNER = "INNER";
     public static final String TYPE_LEFT = "LEFT";
     public static final String TYPE_RIGHT = "RIGHT";

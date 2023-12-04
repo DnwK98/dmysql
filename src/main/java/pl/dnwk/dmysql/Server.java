@@ -4,6 +4,7 @@ import pl.dnwk.dmysql.cluster.Cluster;
 import pl.dnwk.dmysql.common.Log;
 import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.connection.Connection;
+import pl.dnwk.dmysql.sharding.schema.DistributedSchema;
 import pl.dnwk.dmysql.tcp.TcpServer;
 
 import java.util.ArrayList;
@@ -66,5 +67,9 @@ public class Server {
 
     public Cluster getCluster() {
         return cluster;
+    }
+
+    public DistributedSchema getDistributedSchema() {
+        return this.config.schema;
     }
 }

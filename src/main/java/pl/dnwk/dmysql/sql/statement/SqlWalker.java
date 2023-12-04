@@ -89,7 +89,7 @@ public class SqlWalker {
     private String walkGroupByClause(GroupByClause groupByClause) {
         var sql = new StringBuilder(" GROUP BY ");
         ArrayList<String> itemsSql = new ArrayList<>();
-        for (PathExpression path : groupByClause.items) {
+        for (ValueExpression path : groupByClause.items) {
             itemsSql.add(walkValueExpression(path));
         }
         sql.append(String.join(", ", itemsSql));
@@ -100,8 +100,9 @@ public class SqlWalker {
     private String walkOrderByClause(OrderByClause orderByClause) {
         var sql = new StringBuilder(" ORDER BY ");
         ArrayList<String> itemsSql = new ArrayList<>();
-        for (PathExpression path : orderByClause.items) {
-            itemsSql.add(walkValueExpression(path));
+        for (OrderByItem item : orderByClause.items) {
+            var descStr = item.direction.equals(OrderByItem.DESC) ? " DESC" : "";
+            itemsSql.add(walkValueExpression(item.orderBy) + descStr);
         }
         sql.append(String.join(", ", itemsSql));
 

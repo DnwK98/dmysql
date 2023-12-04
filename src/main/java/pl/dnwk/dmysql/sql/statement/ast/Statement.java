@@ -1,4 +1,6 @@
 package pl.dnwk.dmysql.sql.statement.ast;
 
-public class Statement {
+import java.io.Serializable;
+
+public class Statement implements Serializable {
 }

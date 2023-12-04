@@ -128,16 +128,27 @@ public class ParserTest extends UnitTestCase {
     }
 
     @Test
-    public void testParsesOrderByGroupBy() {
-        String sql = "SELECT c.owner, c.name, COUNT(c.id) FROM cars GROUP BY c.owner, c.name ORDER BY c.owner, c.name";
+    public void testParsesGroupBy() {
+        String sql = "SELECT c.owner, c.name, COUNT(c.id) FROM cars GROUP BY c.owner, c.name";
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
-        assertEquals("owner", statement.groupByClause.items.get(0).field);
-        assertEquals("name", statement.groupByClause.items.get(1).field);
+        assertEquals("owner", ((PathExpression) statement.groupByClause.items.get(0)).field);
+        assertEquals("name", ((PathExpression) statement.groupByClause.items.get(1)).field);
+    }
 
-        assertEquals("owner", statement.orderByClause.items.get(0).field);
-        assertEquals("name", statement.orderByClause.items.get(1).field);
+    @Test
+    public void testParsesOrderBy() {
+        String sql = "" +
+                "SELECT c.owner, c.name, COUNT(c.id) as count " +
+                "FROM cars " +
+                "ORDER BY c.owner , c.name DESC, count ASC ";
+
+        SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
+
+        assertEquals("owner", ((PathExpression) statement.orderByClause.items.get(0).orderBy).field);
+        assertEquals("name", ((PathExpression) statement.orderByClause.items.get(1).orderBy).field);
+        assertEquals(OrderByItem.DESC, statement.orderByClause.items.get(1).direction);
     }
 
     @Test

@@ -315,11 +315,11 @@ public class Parser {
         lexer.match(T_GROUP);
         lexer.match(T_BY);
 
-        groupBy.items.add((PathExpression) parseScalarExpression());
+        groupBy.items.add(parseScalarExpression());
 
         while (lexer.nextIs(T_COMMA)) {
             lexer.match(T_COMMA);
-            groupBy.items.add((PathExpression) parseScalarExpression());
+            groupBy.items.add(parseScalarExpression());
         }
 
         return groupBy;
@@ -330,12 +330,25 @@ public class Parser {
         lexer.match(T_ORDER);
         lexer.match(T_BY);
 
-        orderBy.items.add((PathExpression) parseScalarExpression());
+        var next = false;
+        do {
+            var orderByItem = new OrderByItem();
+            orderByItem.orderBy = parseScalarExpression();
+            if(lexer.nextIs(T_ASC)) {
+                lexer.match(T_ASC);
+            }
+            if(lexer.nextIs(T_DESC)) {
+                lexer.match(T_DESC);
+                orderByItem.direction = OrderByItem.DESC;
+            }
+            orderBy.items.add(orderByItem);
 
-        while (lexer.nextIs(T_COMMA)) {
-            lexer.match(T_COMMA);
-            orderBy.items.add((PathExpression) parseScalarExpression());
-        }
+            next = false;
+            if(lexer.nextIs(T_COMMA)) {
+                next = true;
+                lexer.match(T_COMMA);
+            }
+        } while (next);
 
         return orderBy;
     }

@@ -51,6 +51,8 @@ public class Lexer {
     public static final int T_LIKE = 218;
     public static final int T_NOT = 219;
     public static final int T_NULL = 220;
+    public static final int T_ASC = 221;
+    public static final int T_DESC = 222;
 
     private static final Map<String, Integer> reserved = new HashMap<>();
     private static final Map<Integer, String> tokenNames = new HashMap<>();
