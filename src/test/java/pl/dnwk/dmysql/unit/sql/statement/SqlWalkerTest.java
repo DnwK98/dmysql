@@ -34,7 +34,7 @@ public class SqlWalkerTest extends UnitTestCase {
 
     @Test
     public void testWalkSimpleWhereExpression() {
-        String sql = "SELECT c.owner FROM cars WHERE c.owner = 1";
+        String sql = "SELECT c.owner FROM cars c WHERE c.owner = 1";
 
         Statement statement = Parser.parseSql(sql);
         String responseSql = walker.walkStatement(statement);
@@ -44,7 +44,7 @@ public class SqlWalkerTest extends UnitTestCase {
 
     @Test
     public void testWalkWhereExpressionWithFunction() {
-        String sql = "SELECT c.owner FROM cars WHERE c.owner IN(1, 2, 3)";
+        String sql = "SELECT c.owner FROM cars c WHERE c.owner IN(1, 2, 3)";
 
         Statement statement = Parser.parseSql(sql);
         String responseSql = walker.walkStatement(statement);
@@ -54,7 +54,7 @@ public class SqlWalkerTest extends UnitTestCase {
 
     @Test
     public void testWalkWhereExpressionWithAnd() {
-        String sql = "SELECT c.owner FROM cars WHERE c.owner = 1 AND c.id > 10";
+        String sql = "SELECT c.owner FROM cars c WHERE c.owner = 1 AND c.id > 10";
 
         Statement statement = Parser.parseSql(sql);
         String responseSql = walker.walkStatement(statement);
@@ -64,7 +64,7 @@ public class SqlWalkerTest extends UnitTestCase {
 
     @Test
     public void testWalkWhereExpressionWithBothAndOr() {
-        String sql = "SELECT c.owner FROM cars WHERE (c.owner = 1 AND (c.id > 2 OR c.id <= 10) OR c.owner = 2)";
+        String sql = "SELECT c.owner FROM cars c WHERE (c.owner = 1 AND (c.id > 2 OR c.id <= 10) OR c.owner = 2)";
 
         Statement statement = Parser.parseSql(sql);
         String responseSql = walker.walkStatement(statement);
@@ -74,7 +74,7 @@ public class SqlWalkerTest extends UnitTestCase {
 
     @Test
     public void testWalkOrderByGroupBy() {
-        String sql = "SELECT c.owner, c.name, COUNT(c.id) FROM cars GROUP BY c.owner, c.name ORDER BY c.owner, c.name";
+        String sql = "SELECT c.owner, c.name, COUNT(c.id) FROM cars c GROUP BY c.owner, c.name ORDER BY c.owner, c.name";
 
         Statement statement = Parser.parseSql(sql);
         String responseSql = walker.walkStatement(statement);

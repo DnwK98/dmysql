@@ -1,6 +1,7 @@
 package pl.dnwk.dmysql.sql.statement;
 
 import pl.dnwk.dmysql.sql.statement.ast.*;
+import pl.dnwk.dmysql.sql.statement.identificationVariables.IdentificationVariablesExtractor;
 import pl.dnwk.dmysql.sql.statement.lexer.Lexer;
 import pl.dnwk.dmysql.sql.statement.lexer.Token;
 
@@ -9,6 +10,7 @@ import static pl.dnwk.dmysql.sql.statement.lexer.Lexer.*;
 public class Parser {
 
     private final Lexer lexer;
+    private final IdentificationVariablesExtractor identificationVariablesExtractor = new IdentificationVariablesExtractor();
 
     public Parser(String sql) {
         this.lexer = new Lexer(sql);
@@ -35,11 +37,13 @@ public class Parser {
 
         statement.selectClause = parseSelectClause();
         statement.fromClause = parseFromClause();
-        statement.whereClause = lexer.nextIs(T_WHERE) ?  parseWhereClause() : null;
-        statement.groupByClause = lexer.nextIs(T_GROUP) ?  parseGroupByClause() : null;
-        statement.orderByClause = lexer.nextIs(T_ORDER) ?  parseOrderByClause() : null;
+        statement.whereClause = lexer.nextIs(T_WHERE) ? parseWhereClause() : null;
+        statement.groupByClause = lexer.nextIs(T_GROUP) ? parseGroupByClause() : null;
+        statement.orderByClause = lexer.nextIs(T_ORDER) ? parseOrderByClause() : null;
 
-        if(lexer.getNextToken() != null) {
+        statement.identificationVariables = identificationVariablesExtractor.extract(statement);
+
+        if (lexer.getNextToken() != null) {
             lexer.match(T_EOF);
         }
 
@@ -60,13 +64,13 @@ public class Parser {
     private SelectExpression parseSelectExpression() {
         SelectExpression selectExpression = new SelectExpression();
 
-        if(isFunction()) {
+        if (isFunction()) {
             Function function = new Function();
             lexer.match(T_IDENTIFIER);
             function.functionName = lexer.getToken().value;
             lexer.match(T_OPEN_PARENTHESIS);
             function.arguments.add(parseScalarExpression());
-            while(lexer.nextIs(T_COMMA)) {
+            while (lexer.nextIs(T_COMMA)) {
                 lexer.match(T_COMMA);
                 function.arguments.add(parseScalarExpression());
             }
@@ -77,11 +81,11 @@ public class Parser {
             selectExpression.expression = parseScalarExpression();
         }
 
-        if(lexer.nextIs(T_AS)) {
+        if (lexer.nextIs(T_AS)) {
             lexer.match(T_AS);
             lexer.match(T_IDENTIFIER);
             selectExpression.alias = lexer.getToken().value;
-        } else if(lexer.nextIs(T_IDENTIFIER)) {
+        } else if (lexer.nextIs(T_IDENTIFIER)) {
             lexer.match(T_IDENTIFIER);
             selectExpression.alias = lexer.getToken().value;
         }
@@ -126,14 +130,14 @@ public class Parser {
         lexer.match(T_IDENTIFIER);
         fromClause.table = lexer.getToken().value;
 
-        if(lexer.nextIs(T_IDENTIFIER)) {
+        if (lexer.nextIs(T_IDENTIFIER)) {
             lexer.match(T_IDENTIFIER);
             fromClause.alias = lexer.getToken().value;
         }
 
         boolean checkJoin = true;
         while (checkJoin) {
-            if(lexer.nextIs(T_JOIN) || lexer.nextIs(T_LEFT) || lexer.nextIs(T_RIGHT) || lexer.nextIs(T_INNER) || lexer.nextIs(T_OUTER)) {
+            if (lexer.nextIs(T_JOIN) || lexer.nextIs(T_LEFT) || lexer.nextIs(T_RIGHT) || lexer.nextIs(T_INNER) || lexer.nextIs(T_OUTER)) {
                 fromClause.joins.add(parseJoin());
             } else {
                 checkJoin = false;
@@ -146,7 +150,7 @@ public class Parser {
 
     private Join parseJoin() {
         var join = new Join();
-        if(lexer.nextIs(T_JOIN)) {
+        if (lexer.nextIs(T_JOIN)) {
             lexer.match(T_JOIN);
         } else {
             lexer.moveNext();
@@ -157,12 +161,12 @@ public class Parser {
         lexer.match(T_IDENTIFIER);
         join.table = lexer.getToken().value;
 
-        if(lexer.nextIs(T_IDENTIFIER)) {
+        if (lexer.nextIs(T_IDENTIFIER)) {
             lexer.match(T_IDENTIFIER);
             join.alias = lexer.getToken().value;
         }
 
-        if(lexer.nextIs(T_ON)) {
+        if (lexer.nextIs(T_ON)) {
             lexer.match(T_ON);
             join.condition = parseConditionalExpression();
         }
@@ -181,12 +185,12 @@ public class Parser {
         var conditionalExpression = new ConditionalExpression();
         conditionalExpression.conditionalTerms.add(parseConditionalTerm());
 
-        while(lexer.nextIs(T_OR)) {
+        while (lexer.nextIs(T_OR)) {
             lexer.match(T_OR);
             conditionalExpression.conditionalTerms.add(parseConditionalTerm());
         }
 
-        if(conditionalExpression.conditionalTerms.size() == 1) {
+        if (conditionalExpression.conditionalTerms.size() == 1) {
             return conditionalExpression.conditionalTerms.get(0);
         }
 
@@ -197,12 +201,12 @@ public class Parser {
         var conditionalTerm = new ConditionalTerm();
         conditionalTerm.conditionalFactors.add(parseConditionalPrimary());
 
-        while(lexer.nextIs(T_AND)) {
+        while (lexer.nextIs(T_AND)) {
             lexer.match(T_AND);
             conditionalTerm.conditionalFactors.add(parseConditionalPrimary());
         }
 
-        if(conditionalTerm.conditionalFactors.size() == 1) {
+        if (conditionalTerm.conditionalFactors.size() == 1) {
             return conditionalTerm.conditionalFactors.get(0);
         }
 
@@ -210,7 +214,7 @@ public class Parser {
     }
 
     private Conditional parseConditionalPrimary() {
-        if(lexer.nextIs(T_OPEN_PARENTHESIS)) {
+        if (lexer.nextIs(T_OPEN_PARENTHESIS)) {
             lexer.match(T_OPEN_PARENTHESIS);
             var expression = parseConditionalExpression();
             lexer.match(T_CLOSE_PARENTHESIS);
@@ -225,22 +229,22 @@ public class Parser {
         var left = parseScalarExpression();
         var operator = parseComparisonOperator();
 
-        if(operator != null) {
+        if (operator != null) {
             var right = parseScalarExpression();
             return new ComparisonCondition(left, operator, right);
         }
 
         boolean not = false;
-        if(lexer.nextIs(T_NOT)) {
+        if (lexer.nextIs(T_NOT)) {
             lexer.match(T_NOT);
             not = true;
         }
 
-        if(lexer.nextIs(T_LIKE)) {
+        if (lexer.nextIs(T_LIKE)) {
             return null; // TODO LIKE expression!
         }
 
-        if(lexer.nextIs(T_IN)) {
+        if (lexer.nextIs(T_IN)) {
             lexer.match(T_IN);
             lexer.match(T_OPEN_PARENTHESIS);
             var inExpression = new InListCondition();
@@ -248,7 +252,7 @@ public class Parser {
             inExpression.not = not;
 
             var inElement = parseScalarExpression();
-            if(!(inElement instanceof Literal)) {
+            if (!(inElement instanceof Literal)) {
                 throw new ParseException("IN() should contain only literals.");
             }
             inExpression.literals.add((Literal) inElement);
@@ -256,7 +260,7 @@ public class Parser {
             while (lexer.nextIs(T_COMMA)) {
                 lexer.match(T_COMMA);
                 inElement = parseScalarExpression();
-                if(!(inElement instanceof Literal)) {
+                if (!(inElement instanceof Literal)) {
                     throw new ParseException("IN() should contain only literals.");
                 }
                 inExpression.literals.add((Literal) inElement);
@@ -271,18 +275,18 @@ public class Parser {
     }
 
     private String parseComparisonOperator() {
-        if(lexer.nextIs(T_EQUALS)){
+        if (lexer.nextIs(T_EQUALS)) {
             lexer.match(T_EQUALS);
             return "=";
         }
 
-        if(lexer.nextIs(T_LT)) {
+        if (lexer.nextIs(T_LT)) {
             lexer.match(T_LT);
-            if(lexer.nextIs(T_EQUALS)) {
+            if (lexer.nextIs(T_EQUALS)) {
                 lexer.match(T_EQUALS);
                 return "<=";
             }
-            if(lexer.nextIs(T_NEGATE)) {
+            if (lexer.nextIs(T_NEGATE)) {
                 lexer.match(T_NEGATE);
                 return "!=";
             }
@@ -290,9 +294,9 @@ public class Parser {
             return "<";
         }
 
-        if(lexer.nextIs(T_GT)) {
+        if (lexer.nextIs(T_GT)) {
             lexer.match(T_GT);
-            if(lexer.nextIs(T_EQUALS)) {
+            if (lexer.nextIs(T_EQUALS)) {
                 lexer.match(T_EQUALS);
                 return ">=";
             }
@@ -300,7 +304,7 @@ public class Parser {
             return ">";
         }
 
-        if(lexer.nextIs(T_NEGATE)) {
+        if (lexer.nextIs(T_NEGATE)) {
             lexer.match(T_NEGATE);
             lexer.match(T_EQUALS);
 
@@ -334,17 +338,17 @@ public class Parser {
         do {
             var orderByItem = new OrderByItem();
             orderByItem.orderBy = parseScalarExpression();
-            if(lexer.nextIs(T_ASC)) {
+            if (lexer.nextIs(T_ASC)) {
                 lexer.match(T_ASC);
             }
-            if(lexer.nextIs(T_DESC)) {
+            if (lexer.nextIs(T_DESC)) {
                 lexer.match(T_DESC);
                 orderByItem.direction = OrderByItem.DESC;
             }
             orderBy.items.add(orderByItem);
 
             next = false;
-            if(lexer.nextIs(T_COMMA)) {
+            if (lexer.nextIs(T_COMMA)) {
                 next = true;
                 lexer.match(T_COMMA);
             }

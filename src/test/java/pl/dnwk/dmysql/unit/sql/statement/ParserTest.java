@@ -43,7 +43,7 @@ public class ParserTest extends UnitTestCase {
 
     @Test
     public void testParsesSimpleFromClause() {
-        String sql = "SELECT c.owner FROM cars";
+        String sql = "SELECT owner FROM cars";
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
@@ -78,7 +78,7 @@ public class ParserTest extends UnitTestCase {
 
     @Test
     public void testParsesSimpleWhereExpression() {
-        String sql = "SELECT c.owner FROM cars WHERE c.owner = 1";
+        String sql = "SELECT c.owner FROM cars c WHERE c.owner = 1";
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
@@ -89,7 +89,7 @@ public class ParserTest extends UnitTestCase {
 
     @Test
     public void testParsesWhereExpressionWithFunction() {
-        String sql = "SELECT c.owner FROM cars WHERE c.owner IN(1,2,3)";
+        String sql = "SELECT c.owner FROM cars c WHERE c.owner IN(1,2,3)";
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
@@ -101,7 +101,7 @@ public class ParserTest extends UnitTestCase {
 
     @Test
     public void testParsesWhereExpressionWithAnd() {
-        String sql = "SELECT c.owner FROM cars WHERE c.owner = 1 AND c.id > 10";
+        String sql = "SELECT c.owner FROM cars c WHERE c.owner = 1 AND c.id > 10";
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
@@ -115,7 +115,7 @@ public class ParserTest extends UnitTestCase {
 
     @Test
     public void testParsesWhereExpressionWithBothAndOr() {
-        String sql = "SELECT c.owner FROM cars WHERE c.owner = 1 AND (c.id > 2 OR c.id <= 10) OR c.owner = 2";
+        String sql = "SELECT c.owner FROM cars c WHERE c.owner = 1 AND (c.id > 2 OR c.id <= 10) OR c.owner = 2";
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
@@ -129,7 +129,7 @@ public class ParserTest extends UnitTestCase {
 
     @Test
     public void testParsesGroupBy() {
-        String sql = "SELECT c.owner, c.name, COUNT(c.id) FROM cars GROUP BY c.owner, c.name";
+        String sql = "SELECT c.owner, c.name, COUNT(c.id) FROM cars c GROUP BY c.owner, c.name";
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);
 
@@ -141,7 +141,7 @@ public class ParserTest extends UnitTestCase {
     public void testParsesOrderBy() {
         String sql = "" +
                 "SELECT c.owner, c.name, COUNT(c.id) as count " +
-                "FROM cars " +
+                "FROM cars c " +
                 "ORDER BY c.owner , c.name DESC, count ASC ";
 
         SelectStatement statement = (SelectStatement) Parser.parseSql(sql);

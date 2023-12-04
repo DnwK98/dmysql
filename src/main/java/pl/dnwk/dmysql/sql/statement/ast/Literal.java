@@ -34,5 +34,10 @@ public class Literal implements ValueExpression {
         l.value = value;
 
         return l;
+
+    }
+
+    public String toString() {
+        return value;
     }
 }

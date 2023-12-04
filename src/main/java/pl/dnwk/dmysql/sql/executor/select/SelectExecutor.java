@@ -3,9 +3,11 @@ package pl.dnwk.dmysql.sql.executor.select;
 import pl.dnwk.dmysql.cluster.Nodes;
 import pl.dnwk.dmysql.common.ArrayBuilder;
 import pl.dnwk.dmysql.common.DeepCopy;
+import pl.dnwk.dmysql.common.Log;
 import pl.dnwk.dmysql.sharding.schema.DistributedSchema;
 import pl.dnwk.dmysql.sql.executor.select.aggregation.Aggregation;
 import pl.dnwk.dmysql.sql.executor.select.aggregation.AnyValue;
+import pl.dnwk.dmysql.sql.executor.nodeSelection.NodeSelector;
 import pl.dnwk.dmysql.sql.statement.SqlWalker;
 import pl.dnwk.dmysql.sql.statement.ast.*;
 
@@ -37,14 +39,15 @@ public class SelectExecutor {
                 SelectStatement nodeStatement = nodesStatements.get(nodeName);
                 String sql = sqlWalker.walkStatement(nodeStatement);
                 var nodeResponse = executeQuery(nodes.get(nodeName), sql);
+                Log.debug("Execute query on node (" + nodeName + ") SQL: " + sql);
                 result.addAll(nodeResponse);
             }
 
             // Group results
             var resultArray = result.toArray();
-            if(originalStatement.groupByClause != null) {
+            if (originalStatement.groupByClause != null) {
                 resultArray = applyGroupBy(originalStatement, resultArray);
-            } else if(hasAggregation(statement)) {
+            } else if (hasAggregation(statement)) {
                 resultArray = new Object[][]{applyAggregation(originalStatement, resultArray)};
             }
 
@@ -67,7 +70,7 @@ public class SelectExecutor {
             for (Join join : statement.fromClause.joins) {
                 shardTable = schema.get(join.table);
                 if (shardTable.sharded) {
-                    if(join.type.equals(Join.TYPE_LEFT)) {
+                    if (join.type.equals(Join.TYPE_LEFT)) {
                         // There we try to LEFT JOIN table which is on one node to table which is on all shards.
                         // It is possible but requires two queries:
                         //   1) INNER JOIN - to all shards for all joined objects
@@ -94,11 +97,26 @@ public class SelectExecutor {
             return map;
         }
 
-        // If there is shard table, parse where statements for all shards
-        // TODO: implement this. Now we pass statements to all shards
-        for (var nodeName : nodes.names()) {
-            var _statement = DeepCopy.copy(statement);
-            map.put(nodeName, _statement);
+        // If there is shard table and where clause, execute only against certain nodes
+        if (statement.whereClause != null) {
+            var selected = NodeSelector.INSTANCE.select(
+                    statement.whereClause.expression,
+                    statement.identificationVariables,
+                    schema,
+                    nodes.names().toArray(new String[0])
+            );
+            if (selected != null) {
+                for (var singleSelected : selected) {
+                    map.put(singleSelected, statement);
+                }
+
+                return map;
+            }
+        }
+
+        // Execute against all nodes
+        for(var node: nodes.names()) {
+            map.put(node, statement);
         }
 
         return map;
@@ -107,18 +125,11 @@ public class SelectExecutor {
     private static Object[][] applyGroupBy(SelectStatement statement, Object[][] result) {
         var groupMap = new HashMap<String, ArrayList<Object[]>>();
 
-        for(var row: result) {
+        for (var row : result) {
             String groupHash = "|";
-            for(var groupItem: statement.groupByClause.items) {
-                if(groupItem instanceof Literal) {
-                    var g = Integer.parseInt(((Literal) groupItem).value) - 1;
-                    if(g < 0) {
-                        throw new RuntimeException("Group by column must be greater than 0");
-                    }
-                    groupHash += row[g] + "|";
-                } else {
-                    throw new RuntimeException("Grouping by column name not supported yet");
-                }
+            for (var groupItem : statement.groupByClause.items) {
+                var g = statement.identificationVariables.getField(groupItem.toString()).column - 1;
+                groupHash += row[g] + "|";
             }
 
             var grouped = groupMap.getOrDefault(groupHash, new ArrayList<>());
@@ -128,7 +139,7 @@ public class SelectExecutor {
 
         var groupedResults = new Object[groupMap.size()][statement.selectClause.selectExpressions.size()];
         var i = 0;
-        for(var groupList: groupMap.values()) {
+        for (var groupList : groupMap.values()) {
             Object[][] group = groupList.toArray(new Object[groupList.size()][]);
             groupedResults[i++] = applyAggregation(statement, group);
         }
@@ -150,17 +161,17 @@ public class SelectExecutor {
     }
 
     private static Object[] applyAggregation(SelectStatement statement, Object[][] group) {
-        if(group.length == 0 ) {
+        if (group.length == 0) {
             return group;
         }
 
         var aggregated = DeepCopy.copy(group[0]); // Copy is not required there. Used only for function pureness.
 
         var i = 0;
-        for(var columnDef: statement.selectClause.selectExpressions) {
+        for (var columnDef : statement.selectClause.selectExpressions) {
             var column = new Object[group.length];
             var j = 0;
-            for(var row: group) {
+            for (var row : group) {
                 column[j++] = row[i];
             }
 
@@ -183,9 +194,9 @@ public class SelectExecutor {
     private static SelectStatement modifyAggregationStatement(SelectStatement originalStatement) {
         var statement = DeepCopy.copy(originalStatement);
         for (var select : statement.selectClause.selectExpressions) {
-            if(select.expression instanceof Function) {
+            if (select.expression instanceof Function) {
                 var f = (Function) select.expression;
-                if(Aggregation.map.containsKey(f.functionName)) {
+                if (Aggregation.map.containsKey(f.functionName)) {
                     select.expression = Aggregation.map.get(f.functionName).getExpression(f);
                 }
             }
@@ -196,22 +207,16 @@ public class SelectExecutor {
 
     private static Object[][] applyOrderBy(SelectStatement statement, Object[][] result) {
         var orderByColumns = ArrayBuilder.create(new RowsComparator.ColumnDef[16]);
-        if(statement.orderByClause != null) {
+        if (statement.orderByClause != null) {
             for (OrderByItem orderByItem : statement.orderByClause.items) {
-                var columnPos = -1;
                 var descending = orderByItem.direction.equals(OrderByItem.DESC);
-
-                if (orderByItem.orderBy instanceof Literal) {
-                    columnPos = (Integer.parseInt(((Literal) orderByItem.orderBy).value) - 1);
-                } else {
-                    throw new RuntimeException("Ordering by column name not supported yet");
-                }
+                var columnPos = statement.identificationVariables.getField(orderByItem.orderBy.toString()).column - 1;
 
                 orderByColumns.add(new RowsComparator.ColumnDef(columnPos, descending));
             }
         }
 
-        if(orderByColumns.empty()) {
+        if (orderByColumns.empty()) {
             orderByColumns.add(new RowsComparator.ColumnDef(0));
         }
 

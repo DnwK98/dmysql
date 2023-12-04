@@ -15,4 +15,8 @@ public class Function implements ValueExpression{
 
         return f;
     }
+
+    public String toString() {
+        return functionName + "(...)";
+    }
 }

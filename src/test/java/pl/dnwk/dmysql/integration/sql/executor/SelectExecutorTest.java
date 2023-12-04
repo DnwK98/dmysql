@@ -73,7 +73,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
                 "SELECT model, AVG(c.mileage) " +
                 "FROM cars c " +
                 "WHERE model IN('Honda', 'BMW', 'Porsche') " +
-                "GROUP BY 1 " +
+                "GROUP BY model " +
                 "ORDER BY 2 DESC"
         );
 
@@ -149,6 +149,44 @@ public class SelectExecutorTest extends IntegrationTestCase {
         var expected = new Object[][] {
                 {"test2", 1}
         };
+        assertArrayEquals(expected, response);
+    }
+
+    @Test
+    public void executeSelectWithComparisonLimitationForSingleShard() {
+        // Given
+        var executor = createExecutor();
+        var statement = createStatement("" +
+                "SELECT users.id, users.ldap " +
+                "FROM users " +
+                "WHERE users.id = 1"
+        );
+
+        // When
+        Object[][] response = executor.execute(statement);
+
+        // Then
+        var expected = new Object[][] {
+                {1, "test1"}
+        };
+        assertArrayEquals(expected, response);
+    }
+
+    @Test
+    public void executeSelectWithComparisonBeingContradictory() {
+        // Given
+        var executor = createExecutor();
+        var statement = createStatement("" +
+                "SELECT users.id, users.ldap " +
+                "FROM users " +
+                "WHERE users.id IN(1,3) AND users.id = 2"
+        );
+
+        // When
+        Object[][] response = executor.execute(statement);
+
+        // Then
+        var expected = new Object[][] {};
         assertArrayEquals(expected, response);
     }
 
