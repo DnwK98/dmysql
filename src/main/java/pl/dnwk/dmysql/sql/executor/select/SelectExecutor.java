@@ -20,14 +20,19 @@ public class SelectExecutor {
     private final DistributedSchema schema;
     private final Nodes nodes;
     private final SqlWalker sqlWalker = new SqlWalker();
+    private final JoinRestrictor joinRestrictor;
 
     public SelectExecutor(DistributedSchema schema, Nodes nodes) {
         this.schema = schema;
         this.nodes = nodes;
+        this.joinRestrictor = new JoinRestrictor(schema);
     }
 
     public Object[][] execute(SelectStatement originalStatement) {
         try {
+            // Not all Joins are allowed. Restrict them.
+            joinRestrictor.restrict(originalStatement);
+
             var statement = modifyAggregationStatement(originalStatement);
             var result = ArrayBuilder.create2D();
 

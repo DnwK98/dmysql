@@ -21,7 +21,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {
+        var expected = new Object[][]{
                 {"DE", "Germany"},
                 {"FR", "France"},
                 {"JP", "Japan"},
@@ -42,7 +42,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {{5}};
+        var expected = new Object[][]{{5}};
         assertArrayEquals(expected, response);
     }
 
@@ -56,7 +56,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {
+        var expected = new Object[][]{
                 {1, "test1"},
                 {2, "test2"},
                 {3, "test3"},
@@ -81,7 +81,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {
+        var expected = new Object[][]{
                 {"BMW", 154000.0f},
                 {"Honda", 65000.0f},
                 {"Porsche", null},
@@ -103,7 +103,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {{438000.0}};
+        var expected = new Object[][]{{438000.0}};
         assertArrayEquals(expected, response);
     }
 
@@ -122,7 +122,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {
+        var expected = new Object[][]{
                 {"test1", "Honda", "GD 1234"},
                 {"test2", "Audi", "DW 12H1"},
                 {"test2", "Mercedes", "WB 721L"}
@@ -146,7 +146,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {
+        var expected = new Object[][]{
                 {"test2", 1}
         };
         assertArrayEquals(expected, response);
@@ -166,7 +166,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {
+        var expected = new Object[][]{
                 {1, "test1"}
         };
         assertArrayEquals(expected, response);
@@ -186,18 +186,32 @@ public class SelectExecutorTest extends IntegrationTestCase {
         Object[][] response = executor.execute(statement);
 
         // Then
-        var expected = new Object[][] {};
+        var expected = new Object[][]{};
         assertArrayEquals(expected, response);
     }
 
     @Test
-    public void executeLeftJoinFromAllShardTableToSingleShardTable() {
+    public void throwsOnLeftJoinShardTableToTableOnAllShards() {
         // Given
         var executor = createExecutor();
         var statement = createStatement("" +
                 "SELECT co.name, ca.registration " +
                 "FROM countries co " +
                 "LEFT JOIN cars ca on co.code = ca.production_country AND ca.model = 'Mercedes'"
+        );
+
+        // Then
+        assertThrows(RuntimeException.class, () -> executor.execute(statement));
+    }
+
+    @Test
+    public void throwsOnNotAllowedJoin() {
+        // Given
+        var executor = createExecutor();
+        var statement = createStatement("" +
+                "SELECT u.ldap, c.model " +
+                "FROM users u " +
+                "LEFT JOIN cars c on u.ldap = c.model"
         );
 
         // Then
