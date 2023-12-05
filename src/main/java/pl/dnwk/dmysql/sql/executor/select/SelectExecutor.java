@@ -13,6 +13,7 @@ import pl.dnwk.dmysql.sql.statement.SqlWalker;
 import pl.dnwk.dmysql.sql.statement.ast.*;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -38,16 +39,12 @@ public class SelectExecutor {
             var result = ArrayBuilder.create2D();
 
             // Get statements to execute on each node
-            HashMap<String, SelectStatement> nodesStatements = getNodesStatements(statement);
+            Map<String, String> nodesStatements = getNodesStatements(statement);
 
             // Execute statements on nodes
-            for (String nodeName : nodesStatements.keySet()) {
-                SelectStatement nodeStatement = nodesStatements.get(nodeName);
-                String sql = sqlWalker.walkStatement(nodeStatement);
-                var nodeResponse = executeQuery(nodes.get(nodeName), sql);
-                Log.debug("Execute query on node (" + nodeName + ") SQL: " + sql);
-                result.addAll(nodeResponse);
-            }
+            nodes.executeQuery(nodesStatements).values().stream()
+                    .map(SelectExecutor::normalizeResult)
+                    .forEach(result::addAll);
 
             // Group results
             var resultArray = result.toArray();
@@ -70,8 +67,8 @@ public class SelectExecutor {
         }
     }
 
-    private HashMap<String, SelectStatement> getNodesStatements(SelectStatement statement) {
-        var map = new HashMap<String, SelectStatement>();
+    private HashMap<String, String> getNodesStatements(SelectStatement statement) {
+        var map = new HashMap<String, String>();
 
         // Select table to check shard (from, join)
         var shardTable = schema.get(statement.fromClause.table);
@@ -102,7 +99,7 @@ public class SelectExecutor {
             String[] keys = nodes.names().toArray(new String[0]);
             int randomKeyPos = new Random().nextInt(keys.length);
             String key = keys[randomKeyPos];
-            map.put(key, statement);
+            map.put(key, sqlWalker.walkStatement(statement));
 
             return map;
         }
@@ -117,7 +114,7 @@ public class SelectExecutor {
             );
             if (selected != null) {
                 for (var singleSelected : selected) {
-                    map.put(singleSelected, statement);
+                    map.put(singleSelected, sqlWalker.walkStatement(statement));
                 }
 
                 return map;
@@ -126,7 +123,7 @@ public class SelectExecutor {
 
         // Execute against all nodes
         for(var node: nodes.names()) {
-            map.put(node, statement);
+            map.put(node, sqlWalker.walkStatement(statement));
         }
 
         return map;
@@ -236,9 +233,8 @@ public class SelectExecutor {
         return result;
     }
 
-    private static Object[][] executeQuery(Connection connection, String sql) {
+    private static Object[][] normalizeResult(ResultSet result) {
         try {
-            var result = connection.createStatement().executeQuery(sql);
             var rowMapper = RowMapper.ofResult(result);
             var rows = ArrayBuilder.create2D();
 

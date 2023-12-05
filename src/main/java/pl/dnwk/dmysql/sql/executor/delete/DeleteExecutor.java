@@ -25,18 +25,13 @@ public class DeleteExecutor {
     public Result execute(DeleteStatement statement) {
 
         var nodesStatements = restrictStatementsToNodes(statement);
-        for (String nodeName : nodesStatements.keySet()) {
-            DeleteStatement nodeStatement = nodesStatements.get(nodeName);
-            String sql = sqlWalker.walkStatement(nodeStatement);
-            executeStatement(nodes.get(nodeName), sql);
-            Log.debug("Execute statement on node (" + nodeName + ") SQL: " + sql);
-        }
+        nodes.executeStatement(nodesStatements);
 
         return Result.text("OK");
     }
 
-    private HashMap<String, DeleteStatement> restrictStatementsToNodes(DeleteStatement statement) {
-        var map = new HashMap<String, DeleteStatement>();
+    private HashMap<String, String> restrictStatementsToNodes(DeleteStatement statement) {
+        var map = new HashMap<String, String>();
         if (statement.whereClause != null) {
             var selected = NodeSelector.INSTANCE.select(
                     statement.whereClause.expression,
@@ -46,7 +41,7 @@ public class DeleteExecutor {
             );
             if (selected != null) {
                 for (var singleSelected : selected) {
-                    map.put(singleSelected, statement);
+                    map.put(singleSelected, sqlWalker.walkStatement(statement));
                 }
 
                 return map;
@@ -55,17 +50,9 @@ public class DeleteExecutor {
 
         // Execute against all nodes
         for(var node: nodes.names()) {
-            map.put(node, statement);
+            map.put(node, sqlWalker.walkStatement(statement));
         }
 
         return map;
-    }
-
-    private static void executeStatement(Connection connection, String sql) {
-        try {
-            connection.createStatement().execute(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

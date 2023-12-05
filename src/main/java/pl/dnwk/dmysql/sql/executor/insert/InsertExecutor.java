@@ -13,6 +13,7 @@ import pl.dnwk.dmysql.sql.statement.ast.Literal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class InsertExecutor {
@@ -28,6 +29,8 @@ public class InsertExecutor {
     public Result execute(InsertStatement statement) {
 
         var nodeNumber = -1;
+
+        var statementsToNodes = new HashMap<String, String>();
         for (String nodeName : nodes.names()) {
             ++nodeNumber;
             var nodeStatement = restrictRecordsForNode(statement, nodeNumber);
@@ -35,9 +38,9 @@ public class InsertExecutor {
                 continue;
             }
             String sql = sqlWalker.walkStatement(nodeStatement);
-            executeStatement(nodes.get(nodeName), sql);
-            Log.debug("Execute statement on node (" + nodeName + ") SQL: " + sql);
+            statementsToNodes.put(nodeName, sql);
         }
+        nodes.executeStatement(statementsToNodes);
 
         return Result.text("OK");
     }
@@ -76,13 +79,5 @@ public class InsertExecutor {
         _statement.values = valuesForShard;
 
         return _statement;
-    }
-
-    private static void executeStatement(Connection connection, String sql) {
-        try {
-            connection.createStatement().execute(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
