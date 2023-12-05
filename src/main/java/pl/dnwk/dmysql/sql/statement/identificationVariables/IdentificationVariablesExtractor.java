@@ -11,6 +11,9 @@ public class IdentificationVariablesExtractor {
         if (statement instanceof InsertStatement) {
             return extractInsert((InsertStatement) statement);
         }
+        if (statement instanceof UpdateStatement) {
+            return extractUpdate((UpdateStatement) statement);
+        }
         if (statement instanceof DeleteStatement) {
             return extractDelete((DeleteStatement) statement);
         }
@@ -26,7 +29,6 @@ public class IdentificationVariablesExtractor {
 
         return variables;
     }
-
 
     private IdentificationVariables extractInsert(InsertStatement statement) {
         var variables = new IdentificationVariables();
@@ -45,6 +47,17 @@ public class IdentificationVariablesExtractor {
                     i++
             ));
         }
+
+        return variables;
+    }
+
+    private IdentificationVariables extractUpdate(UpdateStatement statement) {
+        var variables = new IdentificationVariables();
+
+        variables.addTable(new IdentificationVariables.Table(
+                statement.table,
+                statement.table
+        ));
 
         return variables;
     }

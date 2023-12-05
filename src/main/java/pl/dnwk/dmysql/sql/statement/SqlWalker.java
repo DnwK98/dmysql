@@ -12,6 +12,9 @@ public class SqlWalker {
         if (statement instanceof InsertStatement) {
             return walkInsertStatement((InsertStatement) statement);
         }
+        if (statement instanceof UpdateStatement) {
+            return walkUpdateStatement((UpdateStatement) statement);
+        }
         if (statement instanceof DeleteStatement) {
             return walkDeleteStatement((DeleteStatement) statement);
         }
@@ -108,6 +111,22 @@ public class SqlWalker {
                 insertValue.columnsValues.stream().map(this::walkValueExpression).toArray(String[]::new))
         );
         sql.append(")");
+
+        return sql.toString();
+    }
+
+    private String walkUpdateStatement(UpdateStatement statement) {
+        var sql = new StringBuilder("UPDATE ");
+        sql.append(statement.table);
+        sql.append(" SET ");
+        for (SetItem setItem: statement.setClause.items) {
+            sql.append(walkValueExpression(setItem.column));
+            sql.append(" = ");
+            sql.append(walkValueExpression(setItem.value));
+        }
+        if(statement.whereClause != null) {
+            sql.append(walkWhereClause(statement.whereClause));
+        }
 
         return sql.toString();
     }

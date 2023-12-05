@@ -28,11 +28,12 @@ public class Parser {
         if (lexer.nextIs(T_INSERT)) {
             return parseInsert();
         }
+        if (lexer.nextIs(T_UPDATE)) {
+            return parseUpdate();
+        }
         if (lexer.nextIs(T_DELETE)) {
             return parseDelete();
         }
-
-        // TODO INSERT, UPDATE, DELETE statements
 
         throw new ParseException("Expected SELECT, INSERT, UPDATE or DELETE");
     }
@@ -207,6 +208,54 @@ public class Parser {
         lexer.match(T_CLOSE_PARENTHESIS);
 
         return value;
+    }
+
+    private UpdateStatement parseUpdate() {
+        lexer.match(T_UPDATE);
+        var statement = new UpdateStatement();
+
+        lexer.match(T_IDENTIFIER);
+        statement.table = lexer.getToken().value;
+
+        statement.setClause = parseSetClause();
+        statement.whereClause = lexer.nextIs(T_WHERE) ? parseWhereClause() : null;
+
+        statement.identificationVariables = identificationVariablesExtractor.extract(statement);
+
+        return statement;
+    }
+
+    private SetClause parseSetClause() {
+        lexer.match(T_SET);
+        var setClause = new SetClause();
+
+        setClause.items.add(parseSetItem());
+        if(lexer.nextIs(T_COMMA)) {
+            lexer.match(T_COMMA);
+            setClause.items.add(parseSetItem());
+        }
+
+        return setClause;
+    }
+
+    private SetItem parseSetItem() {
+        var column = parseScalarExpression();
+        if(!(column instanceof PathExpression)) {
+            throw new ParseException("Left side of SET expression should be path expression");
+        }
+
+        lexer.match(T_EQUALS);
+
+        var value = parseScalarExpression();
+        if(!(value instanceof Literal)) {
+            throw new ParseException("Right side of SET expression should be literal");
+        }
+
+        var setItem = new SetItem();
+        setItem.column = (PathExpression) column;
+        setItem.value = (Literal) value;
+
+        return setItem;
     }
 
     private DeleteStatement parseDelete() {

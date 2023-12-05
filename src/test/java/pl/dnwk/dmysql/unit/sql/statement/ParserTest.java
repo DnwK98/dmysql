@@ -186,6 +186,20 @@ public class ParserTest extends UnitTestCase {
     }
 
     @Test
+    public void testParseSimpleUpdate() {
+        String sql = "" +
+                "UPDATE cars SET model = 'BMW' WHERE model = 'BM_'";
+
+        UpdateStatement statement = (UpdateStatement) Parser.parseSql(sql);
+
+        assertEquals("model", statement.setClause.items.get(0).column.field);
+        assertEquals("BMW", statement.setClause.items.get(0).value.value);
+
+        assertEquals("model", ((ComparisonCondition) statement.whereClause.expression).left.toString());
+        assertEquals("BM_", ((ComparisonCondition) statement.whereClause.expression).right.toString());
+    }
+
+    @Test
     public void testParseSimpleDelete() {
         String sql = "" +
                 "DELETE FROM cars";
