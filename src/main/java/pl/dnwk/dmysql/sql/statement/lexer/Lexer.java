@@ -54,6 +54,10 @@ public class Lexer {
     public static final int T_ASC = 221;
     public static final int T_DESC = 222;
 
+    public static final int T_INSERT = 230;
+    public static final int T_INTO = 231;
+    public static final int T_VALUES = 232;
+
     private static final Map<String, Integer> reserved = new HashMap<>();
     private static final Map<Integer, String> tokenNames = new HashMap<>();
 

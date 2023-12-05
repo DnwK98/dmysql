@@ -9,6 +9,9 @@ public class SqlWalker {
         if (statement instanceof SelectStatement) {
             return walkSelectStatement((SelectStatement) statement);
         }
+        if (statement instanceof InsertStatement) {
+            return walkInsertStatement((InsertStatement) statement);
+        }
 
         return null; // TODO walk other statements;
     }
@@ -75,6 +78,33 @@ public class SqlWalker {
             sql.append(" ON ");
             sql.append(walkCondition(join.condition));
         }
+
+        return sql.toString();
+    }
+
+    private String walkInsertStatement(InsertStatement statement) {
+        var sql = new StringBuilder("INSERT INTO ");
+        sql.append(statement.table);
+        sql.append(" (");
+        sql.append(String.join(", ", statement.columns));
+        sql.append(") VALUES ");
+
+        ArrayList<String> valuesSql = new ArrayList<>();
+        for (InsertValue insertValue : statement.values) {
+            valuesSql.add(walkInsertValue(insertValue));
+        }
+        sql.append(String.join(", ", valuesSql));
+
+        return sql.toString();
+    }
+
+    private String walkInsertValue(InsertValue insertValue) {
+        var sql = new StringBuilder("(");
+        sql.append(String.join(
+                ", ",
+                insertValue.columnsValues.stream().map(this::walkValueExpression).toArray(String[]::new))
+        );
+        sql.append(")");
 
         return sql.toString();
     }

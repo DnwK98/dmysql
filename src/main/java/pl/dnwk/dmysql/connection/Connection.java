@@ -4,6 +4,7 @@ import pl.dnwk.dmysql.Server;
 import pl.dnwk.dmysql.cluster.Nodes;
 import pl.dnwk.dmysql.common.Bytes;
 import pl.dnwk.dmysql.common.Log;
+import pl.dnwk.dmysql.sql.executor.Result;
 import pl.dnwk.dmysql.sql.executor.SqlExecutor;
 import pl.dnwk.dmysql.tcp.TcpConnectionHandler;
 
@@ -35,7 +36,7 @@ public class Connection implements TcpConnectionHandler {
             return 1;
         }
 
-        String result = executeSql(s);
+        String result = execute(s);
 
         output.append("\n---\n".getBytes(StandardCharsets.UTF_8));
         output.append(result.getBytes(StandardCharsets.UTF_8));
@@ -49,24 +50,35 @@ public class Connection implements TcpConnectionHandler {
         server.onConnectionClose(this);
     }
 
-    public String executeSql(String sql) {
+    public String execute(String sql) {
         try {
-            StringBuilder result = new StringBuilder(256);
-            Object[][] response = sqlExecutor.executeSql(sql);
-            for (var row : response) {
+            StringBuilder response = new StringBuilder(256);
+            Result result = executeSql(sql);
+            for(int i = 0; i < result.columns.length; i++) {
+                response.append(result.columns[i]);
+                if(i < result.columns.length - 1) {
+                    response.append(" | ");
+                }
+                response.append("\n");
+            }
+            for (var row : result.values) {
                 for(int i = 0; i < row.length; i++) {
-                    result.append(row[i]);
+                    response.append(row[i]);
                     if(i < row.length - 1) {
-                        result.append(" | ");
+                        response.append(" | ");
                     }
-                    result.append("\n");
+                    response.append("\n");
                 }
             }
 
-            return result.toString();
+            return response.toString();
         } catch (Exception e) {
             Log.error("Invalid SQL: " + sql + "Error: " + e.getMessage());
             return "Error: " + e.getMessage();
         }
+    }
+
+    public Result executeSql(String sql) {
+        return sqlExecutor.executeSql(sql);
     }
 }

@@ -166,4 +166,22 @@ public class ParserTest extends UnitTestCase {
         // Assert not failed
         assertTrue(true);
     }
+
+    @Test
+    public void testParseSimpleInsert() {
+        String sql = "" +
+                "INSERT INTO cars (registration, model) VALUES" +
+                "('WB 1234', 'Mercedes'), " +
+                "('BI 5544', 'BMW');";
+
+        InsertStatement statement = (InsertStatement) Parser.parseSql(sql);
+
+        assertEquals("cars", statement.table);
+
+        assertEquals("WB 1234", statement.values.get(0).columnsValues.get(0).value);
+        assertEquals("Mercedes", statement.values.get(0).columnsValues.get(1).value);
+
+        assertEquals("BI 5544", statement.values.get(1).columnsValues.get(0).value);
+        assertEquals("BMW", statement.values.get(1).columnsValues.get(1).value);
+    }
 }

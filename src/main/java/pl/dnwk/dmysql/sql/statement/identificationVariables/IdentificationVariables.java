@@ -54,6 +54,10 @@ public class IdentificationVariables implements Serializable {
         throw new RuntimeException("Missing field for path: " + path);
     }
 
+    public String[] getFieldsAliases() {
+        return aliasFieldMap.keySet().toArray(new String[0]);
+    }
+
     public Table getTable(String path) {
         if (aliasTableMap.containsKey(path)) {
             return aliasTableMap.get(path);

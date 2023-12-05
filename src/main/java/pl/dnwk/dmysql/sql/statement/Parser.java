@@ -25,6 +25,9 @@ public class Parser {
         if (lexer.nextIs(T_SELECT)) {
             return parseSelect();
         }
+        if (lexer.nextIs(T_INSERT)) {
+            return parseInsert();
+        }
 
         // TODO INSERT, UPDATE, DELETE statements
 
@@ -93,35 +96,6 @@ public class Parser {
         return selectExpression;
     }
 
-    private ValueExpression parseScalarExpression() {
-        if (lexer.nextIs(T_STRING)) {
-            lexer.match(T_STRING);
-            return Literal.String(lexer.getToken().value);
-        }
-        if (lexer.nextIs(T_INT)) {
-            lexer.match(T_INT);
-            return Literal.Numeric(lexer.getToken().value);
-        }
-        if (lexer.nextIs(T_FLOAT)) {
-            lexer.match(T_FLOAT);
-            return Literal.Numeric(lexer.getToken().value);
-        }
-
-        PathExpression pathExpression = new PathExpression();
-        lexer.match(T_IDENTIFIER);
-
-        if (lexer.nextIs(T_DOT)) {
-            pathExpression.tableIdentification = lexer.getToken().value;
-            lexer.match(T_DOT);
-            lexer.match(T_IDENTIFIER);
-            pathExpression.field = lexer.getToken().value;
-        } else {
-            pathExpression.field = lexer.getToken().value;
-        }
-
-        return pathExpression;
-    }
-
     private FromClause parseFromClause() {
         lexer.match(T_FROM);
 
@@ -174,6 +148,93 @@ public class Parser {
         return join;
     }
 
+
+    private InsertStatement parseInsert() {
+        lexer.match(T_INSERT);
+        lexer.match(T_INTO);
+        var statement = new InsertStatement();
+
+        lexer.match(T_IDENTIFIER);
+        statement.table = lexer.getToken().value;
+
+        // Columns
+        lexer.match(T_OPEN_PARENTHESIS);
+
+        lexer.match(T_IDENTIFIER);
+        statement.columns.add(lexer.getToken().value);
+
+        while (lexer.nextIs(T_COMMA)) {
+            lexer.match(T_COMMA);
+            lexer.match(T_IDENTIFIER);
+            statement.columns.add(lexer.getToken().value);
+        }
+        lexer.match(T_CLOSE_PARENTHESIS);
+
+        // Values
+        lexer.match(T_VALUES);
+        statement.values.add(parseInsertValue());
+        while (lexer.nextIs(T_COMMA)) {
+            lexer.match(T_COMMA);
+            statement.values.add(parseInsertValue());
+        }
+
+        statement.identificationVariables = identificationVariablesExtractor.extract(statement);
+
+        return statement;
+    }
+
+    private InsertValue parseInsertValue() {
+        lexer.match(T_OPEN_PARENTHESIS);
+
+        var value = new InsertValue();
+
+        var hasNext = true;
+        do {
+            var columnValue = parseScalarExpression();
+            if(!(columnValue instanceof Literal)) {
+                throw new ParseException("Insert values must be literals.");
+            }
+            value.columnsValues.add((Literal) columnValue);
+
+            if(lexer.nextIs(T_COMMA)) {
+                lexer.match(T_COMMA);
+            } else {
+                hasNext = false;
+            }
+        } while (hasNext);
+        lexer.match(T_CLOSE_PARENTHESIS);
+
+        return value;
+    }
+
+    private ValueExpression parseScalarExpression() {
+        if (lexer.nextIs(T_STRING)) {
+            lexer.match(T_STRING);
+            return Literal.String(lexer.getToken().value);
+        }
+        if (lexer.nextIs(T_INT)) {
+            lexer.match(T_INT);
+            return Literal.Numeric(lexer.getToken().value);
+        }
+        if (lexer.nextIs(T_FLOAT)) {
+            lexer.match(T_FLOAT);
+            return Literal.Numeric(lexer.getToken().value);
+        }
+
+        PathExpression pathExpression = new PathExpression();
+        lexer.match(T_IDENTIFIER);
+
+        if (lexer.nextIs(T_DOT)) {
+            pathExpression.tableIdentification = lexer.getToken().value;
+            lexer.match(T_DOT);
+            lexer.match(T_IDENTIFIER);
+            pathExpression.field = lexer.getToken().value;
+        } else {
+            pathExpression.field = lexer.getToken().value;
+        }
+
+        return pathExpression;
+    }
 
     private WhereClause parseWhereClause() {
         lexer.match(T_WHERE);

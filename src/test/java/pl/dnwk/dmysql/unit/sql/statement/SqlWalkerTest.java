@@ -81,4 +81,14 @@ public class SqlWalkerTest extends UnitTestCase {
 
         assertEquals(sql, responseSql);
     }
+
+    @Test
+    public void testWalkSimpleInsert() {
+        String sql = "INSERT INTO cars (registration, model) VALUES ('WB 1234', 'Mercedes'), ('BI 5544', 'BMW')";
+
+        Statement statement = Parser.parseSql(sql);
+        String responseSql = walker.walkStatement(statement);
+
+        assertEquals(sql, responseSql);
+    }
 }

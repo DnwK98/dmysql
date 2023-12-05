@@ -5,6 +5,7 @@ import pl.dnwk.dmysql.common.ArrayBuilder;
 import pl.dnwk.dmysql.common.DeepCopy;
 import pl.dnwk.dmysql.common.Log;
 import pl.dnwk.dmysql.sharding.schema.DistributedSchema;
+import pl.dnwk.dmysql.sql.executor.Result;
 import pl.dnwk.dmysql.sql.executor.select.aggregation.Aggregation;
 import pl.dnwk.dmysql.sql.executor.select.aggregation.AnyValue;
 import pl.dnwk.dmysql.sql.executor.nodeSelection.NodeSelector;
@@ -28,7 +29,7 @@ public class SelectExecutor {
         this.joinRestrictor = new JoinRestrictor(schema);
     }
 
-    public Object[][] execute(SelectStatement originalStatement) {
+    public Result execute(SelectStatement originalStatement) {
         try {
             // Not all Joins are allowed. Restrict them.
             joinRestrictor.restrict(originalStatement);
@@ -59,7 +60,11 @@ public class SelectExecutor {
             // Order results
             resultArray = applyOrderBy(originalStatement, resultArray);
 
-            return resultArray;
+
+            return Result.table(
+                    statement.identificationVariables.getFieldsAliases(),
+                    resultArray
+            );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

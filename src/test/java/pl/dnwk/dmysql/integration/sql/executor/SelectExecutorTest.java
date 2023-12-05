@@ -2,6 +2,7 @@ package pl.dnwk.dmysql.integration.sql.executor;
 
 import org.junit.jupiter.api.Test;
 import pl.dnwk.dmysql.integration.IntegrationTestCase;
+import pl.dnwk.dmysql.sql.executor.Result;
 import pl.dnwk.dmysql.sql.executor.select.SelectExecutor;
 import pl.dnwk.dmysql.sql.statement.Parser;
 import pl.dnwk.dmysql.sql.statement.ast.SelectStatement;
@@ -18,7 +19,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         var statement = createStatement("SELECT code, name FROM countries");
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{
@@ -29,7 +30,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
                 {"US", "United States"},
         };
 
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test
@@ -39,11 +40,11 @@ public class SelectExecutorTest extends IntegrationTestCase {
         var statement = createStatement("SELECT count(code) FROM countries");
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{{5}};
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test
@@ -53,7 +54,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         var statement = createStatement("SELECT id, ldap FROM users");
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{
@@ -62,7 +63,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
                 {3, "test3"},
                 {4, "test4"},
         };
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test
@@ -78,7 +79,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         );
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{
@@ -86,7 +87,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
                 {"Honda", 65000.0f},
                 {"Porsche", null},
         };
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test
@@ -100,11 +101,11 @@ public class SelectExecutorTest extends IntegrationTestCase {
         );
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{{438000.0}};
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test
@@ -119,7 +120,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
         );
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{
@@ -127,7 +128,7 @@ public class SelectExecutorTest extends IntegrationTestCase {
                 {"test2", "Audi", "DW 12H1"},
                 {"test2", "Mercedes", "WB 721L"}
         };
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test
@@ -143,13 +144,13 @@ public class SelectExecutorTest extends IntegrationTestCase {
         );
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{
                 {"test2", 1}
         };
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test
@@ -163,13 +164,13 @@ public class SelectExecutorTest extends IntegrationTestCase {
         );
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{
                 {1, "test1"}
         };
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test
@@ -183,11 +184,11 @@ public class SelectExecutorTest extends IntegrationTestCase {
         );
 
         // When
-        Object[][] response = executor.execute(statement);
+        Result result = executor.execute(statement);
 
         // Then
         var expected = new Object[][]{};
-        assertArrayEquals(expected, response);
+        assertArrayEquals(expected, result.values);
     }
 
     @Test

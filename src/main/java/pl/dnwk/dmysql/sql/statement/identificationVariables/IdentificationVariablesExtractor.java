@@ -8,6 +8,9 @@ public class IdentificationVariablesExtractor {
         if(statement instanceof SelectStatement) {
             return extractSelect((SelectStatement) statement);
         }
+        if(statement instanceof InsertStatement) {
+            return extractInsert((InsertStatement) statement);
+        }
 
         throw new RuntimeException("Not implemented yet");
     }
@@ -17,6 +20,28 @@ public class IdentificationVariablesExtractor {
 
         identificationFromClause(statement.fromClause, variables);
         identificationSelectClause(statement.selectClause, variables);
+
+        return variables;
+    }
+
+
+    private IdentificationVariables extractInsert(InsertStatement statement) {
+        var variables = new IdentificationVariables();
+
+        variables.addTable(new IdentificationVariables.Table(
+                statement.table,
+                statement.table
+        ));
+
+        var i = 1;
+        for(var column: statement.columns) {
+            variables.addField(new IdentificationVariables.Field(
+                    variables.getSingleTable(),
+                    column,
+                    column,
+                    i++
+            ));
+        }
 
         return variables;
     }
