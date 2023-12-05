@@ -184,4 +184,26 @@ public class ParserTest extends UnitTestCase {
         assertEquals("BI 5544", statement.values.get(1).columnsValues.get(0).value);
         assertEquals("BMW", statement.values.get(1).columnsValues.get(1).value);
     }
+
+    @Test
+    public void testParseSimpleDelete() {
+        String sql = "" +
+                "DELETE FROM cars";
+
+        DeleteStatement statement = (DeleteStatement) Parser.parseSql(sql);
+
+        assertEquals("cars", statement.fromClause.table);
+    }
+
+    @Test
+    public void testParseDeleteWithCondition() {
+        String sql = "" +
+                "DELETE FROM cars WHERE model = 'Mercedes'";
+
+        DeleteStatement statement = (DeleteStatement) Parser.parseSql(sql);
+
+        assertEquals("cars", statement.fromClause.table);
+        var model = ((ComparisonCondition) statement.whereClause.expression).right.toString();
+        assertEquals("Mercedes", model);
+    }
 }

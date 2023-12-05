@@ -91,4 +91,14 @@ public class SqlWalkerTest extends UnitTestCase {
 
         assertEquals(sql, responseSql);
     }
+
+    @Test
+    public void testWalkDeleteWithCondition() {
+        String sql = "DELETE FROM cars WHERE model = 'Mercedes'";
+
+        Statement statement = Parser.parseSql(sql);
+        String responseSql = walker.walkStatement(statement);
+
+        assertEquals(sql, responseSql);
+    }
 }

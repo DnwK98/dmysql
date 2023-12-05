@@ -12,6 +12,9 @@ public class SqlWalker {
         if (statement instanceof InsertStatement) {
             return walkInsertStatement((InsertStatement) statement);
         }
+        if (statement instanceof DeleteStatement) {
+            return walkDeleteStatement((DeleteStatement) statement);
+        }
 
         return null; // TODO walk other statements;
     }
@@ -105,6 +108,16 @@ public class SqlWalker {
                 insertValue.columnsValues.stream().map(this::walkValueExpression).toArray(String[]::new))
         );
         sql.append(")");
+
+        return sql.toString();
+    }
+
+    private String walkDeleteStatement(DeleteStatement statement) {
+        var sql = new StringBuilder("DELETE");
+        sql.append(walkFromClause(statement.fromClause));
+        if(statement.whereClause != null) {
+            sql.append(walkWhereClause(statement.whereClause));
+        }
 
         return sql.toString();
     }

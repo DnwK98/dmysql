@@ -28,6 +28,9 @@ public class Parser {
         if (lexer.nextIs(T_INSERT)) {
             return parseInsert();
         }
+        if (lexer.nextIs(T_DELETE)) {
+            return parseDelete();
+        }
 
         // TODO INSERT, UPDATE, DELETE statements
 
@@ -148,7 +151,6 @@ public class Parser {
         return join;
     }
 
-
     private InsertStatement parseInsert() {
         lexer.match(T_INSERT);
         lexer.match(T_INTO);
@@ -205,6 +207,18 @@ public class Parser {
         lexer.match(T_CLOSE_PARENTHESIS);
 
         return value;
+    }
+
+    private DeleteStatement parseDelete() {
+        lexer.match(T_DELETE);
+        var statement = new DeleteStatement();
+
+        statement.fromClause = parseFromClause();
+        statement.whereClause = lexer.nextIs(T_WHERE) ? parseWhereClause() : null;
+
+        statement.identificationVariables = identificationVariablesExtractor.extract(statement);
+
+        return statement;
     }
 
     private ValueExpression parseScalarExpression() {

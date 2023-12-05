@@ -5,11 +5,14 @@ import pl.dnwk.dmysql.sql.statement.ast.*;
 public class IdentificationVariablesExtractor {
 
     public IdentificationVariables extract(Statement statement) {
-        if(statement instanceof SelectStatement) {
+        if (statement instanceof SelectStatement) {
             return extractSelect((SelectStatement) statement);
         }
-        if(statement instanceof InsertStatement) {
+        if (statement instanceof InsertStatement) {
             return extractInsert((InsertStatement) statement);
+        }
+        if (statement instanceof DeleteStatement) {
+            return extractDelete((DeleteStatement) statement);
         }
 
         throw new RuntimeException("Not implemented yet");
@@ -34,7 +37,7 @@ public class IdentificationVariablesExtractor {
         ));
 
         var i = 1;
-        for(var column: statement.columns) {
+        for (var column : statement.columns) {
             variables.addField(new IdentificationVariables.Field(
                     variables.getSingleTable(),
                     column,
@@ -46,19 +49,27 @@ public class IdentificationVariablesExtractor {
         return variables;
     }
 
+    private IdentificationVariables extractDelete(DeleteStatement statement) {
+        var variables = new IdentificationVariables();
+
+        identificationFromClause(statement.fromClause, variables);
+
+        return variables;
+    }
+
     private void identificationSelectClause(SelectClause selectClause, IdentificationVariables variables) {
         var i = 1;
-        for(SelectExpression expr: selectClause.selectExpressions) {
-            if(expr.expression instanceof PathExpression) {
+        for (SelectExpression expr : selectClause.selectExpressions) {
+            if (expr.expression instanceof PathExpression) {
                 var e = (PathExpression) expr.expression;
-                if(e.tableIdentification != null) {
+                if (e.tableIdentification != null) {
                     variables.addField(new IdentificationVariables.Field(
                             variables.getTable(e.tableIdentification),
                             e.field,
                             expr.alias,
                             i
                     ));
-                } else if(variables.hasSingleTable()) {
+                } else if (variables.hasSingleTable()) {
                     variables.addField(new IdentificationVariables.Field(
                             variables.getSingleTable(),
                             e.field,
@@ -70,11 +81,11 @@ public class IdentificationVariablesExtractor {
                 }
             } else {
                 var alias = expr.alias;
-                if(alias == null) {
-                    if(expr.expression instanceof Function) {
-                        alias = ((Function)expr.expression).functionName.toLowerCase() + "__";
+                if (alias == null) {
+                    if (expr.expression instanceof Function) {
+                        alias = ((Function) expr.expression).functionName.toLowerCase() + "__";
                     } else if (expr.expression instanceof Literal) {
-                        alias = ((Literal)expr.expression).value.toLowerCase();
+                        alias = ((Literal) expr.expression).value.toLowerCase();
                     }
                 }
                 variables.addField(new IdentificationVariables.Field(
@@ -94,7 +105,7 @@ public class IdentificationVariablesExtractor {
                 from.alias
         ));
 
-        for(Join join: from.joins) {
+        for (Join join : from.joins) {
             variables.addTable(new IdentificationVariables.Table(
                     join.table,
                     join.alias
