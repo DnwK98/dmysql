@@ -58,8 +58,13 @@ public class SelectExecutor {
             resultArray = applyOrderBy(originalStatement, resultArray);
 
 
+            ArrayBuilder<String> columns = ArrayBuilder.create(new String[16]);
+            for(int i = 1; i <= statement.selectClause.selectExpressions.size(); i++) {
+                columns.add(statement.identificationVariables.getField(String.valueOf(i)).alias);
+            }
+
             return Result.table(
-                    statement.identificationVariables.getFieldsAliases(),
+                    columns.toArray(),
                     resultArray
             );
         } catch (Exception e) {

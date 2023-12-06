@@ -28,7 +28,7 @@ public class ArrayBuilder<T> {
 
     public void add(T element) {
         if (data.length == length) {
-            data = Arrays.copyOf(data, 2 * length);
+            data = Arrays.copyOf(data, 2 * (length + 1));
         }
         data[length++] = element;
     }

@@ -54,21 +54,27 @@ public class Connection implements TcpConnectionHandler {
         try {
             StringBuilder response = new StringBuilder(256);
             Result result = executeSql(sql);
+
+            if(result.text != null) {
+                response.append(result.text);
+                return response.toString();
+            }
+
             for(int i = 0; i < result.columns.length; i++) {
                 response.append(result.columns[i]);
                 if(i < result.columns.length - 1) {
                     response.append(" | ");
                 }
-                response.append("\n");
             }
+            response.append("\n----------------\n");
             for (var row : result.values) {
                 for(int i = 0; i < row.length; i++) {
                     response.append(row[i]);
                     if(i < row.length - 1) {
                         response.append(" | ");
                     }
-                    response.append("\n");
                 }
+                response.append("\n");
             }
 
             return response.toString();
