@@ -43,6 +43,20 @@ public class Cluster {
         }
     }
 
+    public void setTransactionIsolationLevel(String level) {
+        try {
+            synchronized (connections) {
+                for (var connections : connections.keySet()) {
+                    for (var connection : connections.connections.values()) {
+                        connection.prepareStatement("SET TRANSACTION ISOLATION LEVEL " + level).execute();
+
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public Nodes get() {
         try {
@@ -76,5 +90,26 @@ public class Cluster {
         } catch (Exception e) {
             Log.error("Failed to restore ConnectionPack in cluster");
         }
+    }
+
+    public void close() {
+        try {
+            synchronized (connections) {
+                for (var connections : connections.keySet()) {
+                    for (var connection : connections.connections.values()) {
+                        connection.close();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static class IsolationLevel {
+        public static final String READ_UNCOMMITTED = "READ UNCOMMITTED";
+        public static final String READ_COMMITTED = "READ COMMITTED";
+        public static final String REPEATABLE_READ = "REPEATABLE READ";
+        public static final String SERIALIZABLE = "SERIALIZABLE";
     }
 }

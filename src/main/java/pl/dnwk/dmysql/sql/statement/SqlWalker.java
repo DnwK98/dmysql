@@ -18,8 +18,11 @@ public class SqlWalker {
         if (statement instanceof DeleteStatement) {
             return walkDeleteStatement((DeleteStatement) statement);
         }
+        if (statement instanceof TransactionManagementStatement) {
+            return walkTransactionManagementStatement((TransactionManagementStatement) statement);
+        }
 
-        return null; // TODO walk other statements;
+        return null;
     }
 
     private String walkSelectStatement(SelectStatement statement) {
@@ -259,5 +262,21 @@ public class SqlWalker {
         }
 
         return sql.toString();
+    }
+
+    private String walkTransactionManagementStatement(TransactionManagementStatement statement) {
+        if(statement.begin) {
+            return "BEGIN";
+        }
+
+        if(statement.commit) {
+            return "COMMIT";
+        }
+
+        if(statement.rollback) {
+            return "ROLLBACK";
+        }
+
+        throw new RuntimeException("Invalid state, any transaction management selected");
     }
 }

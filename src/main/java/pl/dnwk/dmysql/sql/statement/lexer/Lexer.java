@@ -61,6 +61,12 @@ public class Lexer {
     public static final int T_UPDATE = 234;
     public static final int T_SET = 235;
 
+    public static final int T_BEGIN = 241;
+    public static final int T_START = 242;
+    public static final int T_TRANSACTION = 243;
+    public static final int T_ROLLBACK = 244;
+    public static final int T_COMMIT = 245;
+
     private static final Map<String, Integer> reserved = new HashMap<>();
     private static final Map<Integer, String> tokenNames = new HashMap<>();
 

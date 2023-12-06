@@ -34,6 +34,9 @@ public class Parser {
         if (lexer.nextIs(T_DELETE)) {
             return parseDelete();
         }
+        if(isTransactionManagementStatement()) {
+            return parseTransactionManagement();
+        }
 
         throw new ParseException("Expected SELECT, INSERT, UPDATE or DELETE");
     }
@@ -479,6 +482,40 @@ public class Parser {
         } while (next);
 
         return orderBy;
+    }
+
+    private boolean isTransactionManagementStatement() {
+        return lexer.nextIs(T_BEGIN) ||
+                lexer.nextIs(T_START) ||
+                lexer.nextIs(T_COMMIT) ||
+                lexer.nextIs(T_ROLLBACK);
+
+    }
+
+    private TransactionManagementStatement parseTransactionManagement() {
+        if(lexer.nextIs(T_BEGIN)) {
+            lexer.match(T_BEGIN);
+
+            return TransactionManagementStatement.begin();
+        }
+        if(lexer.nextIs(T_START)) {
+            lexer.match(T_START);
+            lexer.match(T_TRANSACTION);
+
+            return TransactionManagementStatement.begin();
+        }
+        if(lexer.nextIs(T_COMMIT)) {
+            lexer.match(T_COMMIT);
+
+            return TransactionManagementStatement.commit();
+        }
+        if(lexer.nextIs(T_ROLLBACK)) {
+            lexer.match(T_ROLLBACK);
+
+            return TransactionManagementStatement.rollback();
+        }
+
+        throw new ParseException("Expected one of BEGIN, COMMIT or ROLLBACK");
     }
 
     private boolean isFunction() {

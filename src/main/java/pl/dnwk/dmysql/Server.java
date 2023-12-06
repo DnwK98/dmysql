@@ -62,6 +62,8 @@ public class Server {
             tcpServer.stop();
         }
 
+        cluster.close();
+
         Log.info("Server stopped successfully");
     }
 

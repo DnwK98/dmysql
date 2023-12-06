@@ -111,4 +111,34 @@ public class SqlWalkerTest extends UnitTestCase {
 
         assertEquals(sql, responseSql);
     }
+
+    @Test
+    public void testWalkTransactionBeginStatement() {
+        String sql = "BEGIN";
+
+        Statement statement = Parser.parseSql(sql);
+        String responseSql = walker.walkStatement(statement);
+
+        assertEquals(sql, responseSql);
+    }
+
+    @Test
+    public void testWalkTransactionCommitStatement() {
+        String sql = "COMMIT";
+
+        Statement statement = Parser.parseSql(sql);
+        String responseSql = walker.walkStatement(statement);
+
+        assertEquals(sql, responseSql);
+    }
+
+    @Test
+    public void testWalkTransactionRollbackStatement() {
+        String sql = "ROLLBACK";
+
+        Statement statement = Parser.parseSql(sql);
+        String responseSql = walker.walkStatement(statement);
+
+        assertEquals(sql, responseSql);
+    }
 }

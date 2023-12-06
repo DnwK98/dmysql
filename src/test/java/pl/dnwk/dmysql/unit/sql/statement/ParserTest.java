@@ -220,4 +220,19 @@ public class ParserTest extends UnitTestCase {
         var model = ((ComparisonCondition) statement.whereClause.expression).right.toString();
         assertEquals("Mercedes", model);
     }
+
+    @Test
+    public void testParseTransactionStatements() {
+        String sql = "BEGIN";
+        TransactionManagementStatement statement = (TransactionManagementStatement) Parser.parseSql(sql);
+        assertTrue(statement.begin);
+
+        sql = "COMMIT";
+        statement = (TransactionManagementStatement) Parser.parseSql(sql);
+        assertTrue(statement.commit);
+
+        sql = "ROLLBACK";
+        statement = (TransactionManagementStatement) Parser.parseSql(sql);
+        assertTrue(statement.rollback);
+    }
 }
