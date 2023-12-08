@@ -5,14 +5,22 @@ import org.junit.jupiter.api.Test;
 import pl.dnwk.dmysql.cluster.Cluster;
 import pl.dnwk.dmysql.cluster.Nodes;
 import pl.dnwk.dmysql.common.ArrayBuilder;
+import pl.dnwk.dmysql.common.Async;
+import pl.dnwk.dmysql.sql.executor.Result;
 import pl.dnwk.dmysql.sql.executor.select.RowMapper;
 
 import java.sql.SQLException;
 import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class TransactionRaceConditionTestTest extends FunctionalTestCase {
+/**
+ * This class shows race, on SELECT - INSERT, and inconsistent results between nodes.
+ *
+ * @see pl.dnwk.dmysql.sql.executor.RacePrevention
+ */
+public class TransactionRaceConditionTest extends FunctionalTestCase {
 
     @Override
     @BeforeEach
@@ -35,8 +43,44 @@ public class TransactionRaceConditionTestTest extends FunctionalTestCase {
         assertEquals(2, res.values.length);
     }
 
+    /**
+     * This test is disabled, because it's result is unpredictable,
+     * but shows clue of this problem.
+     */
+    public void atomicallyInsertRecordsIntoTwoShardsAsync() {
+        var i = 0;
+        var con1 = server.createConnection();
+        var con2 = server.createConnection();
+
+        var r = new Object() {
+            Result res = null;
+        };
+
+        while(true) {
+            con1.executeSql("DELETE FROM users");
+            Async.waitFor(new Thread[]{
+                    Async.executeAfter(10, (x) -> con1.executeSql("BEGIN")),
+                    Async.executeAfter(20, (x) -> con1.executeSql("INSERT INTO users (id, name) VALUES (1, 'Piotr')")),
+                    Async.executeAfter(30, (x) -> con1.executeSql("INSERT INTO users (id, name) VALUES (2, 'Karol')")),
+                    Async.executeAfter(44, (x) -> con1.executeSql("COMMIT")),
+                    Async.executeAfter(48, (x) -> r.res = con2.executeSql("SELECT name FROM users")),
+            });
+
+            if(r.res.values.length != 2 && r.res.values.length != 0) {
+                fail( "Failed after: " + i + " iterations, response: " + r.res.values[0][0]);
+            }
+            if(i > 500) {
+                // Break loop, when after 500 iterations there were any race condition
+                // then exit test with warning, because we know that this race condition exists.
+                break;
+            }
+
+            ++i;
+        }
+    }
+
     @Test
-    public void raceCondition() {
+    public void demonstrateRaceCondition() {
         var n1 = server.getCluster().get();
         var n2 = server.getCluster().get();
 

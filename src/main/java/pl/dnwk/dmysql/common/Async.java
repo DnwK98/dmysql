@@ -14,14 +14,36 @@ public class Async {
         }).start();
     }
 
-    public static void executeAfter(int milliseconds, Consumer<Integer> executionCallback) {
-        new Thread(() -> {
+    public static Thread executeAfter(int milliseconds, Consumer<Integer> executionCallback) {
+        var t = new Thread(() -> {
             try {
                 Thread.sleep(milliseconds);
                 executionCallback.accept(1);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }).start();
+        });
+        t.start();
+
+        return t;
+    }
+
+    public static void sleep(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void waitFor(Thread[] threads) {
+        for(var t: threads) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        sleep(10);
     }
 }
