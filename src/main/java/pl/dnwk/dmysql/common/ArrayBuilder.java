@@ -26,14 +26,16 @@ public class ArrayBuilder<T> {
         return Arrays.copyOf(data, length);
     }
 
-    public void add(T element) {
+    public ArrayBuilder<T> add(T element) {
         if (data.length == length) {
             data = Arrays.copyOf(data, 2 * (length + 1));
         }
         data[length++] = element;
+
+        return this;
     }
 
-    public void addAll(T[] elements) {
+    public ArrayBuilder<T> addAll(T[] elements) {
         if(length + elements.length >= data.length) {
             data = Arrays.copyOf(data, 2 * (data.length + elements.length));
         }
@@ -41,6 +43,8 @@ public class ArrayBuilder<T> {
         for (var el : elements) {
             data[length++] = el;
         }
+
+        return this;
     }
 
     public boolean empty() {

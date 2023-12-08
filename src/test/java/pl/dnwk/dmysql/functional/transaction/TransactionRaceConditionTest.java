@@ -1,4 +1,4 @@
-package pl.dnwk.dmysql.functional;
+package pl.dnwk.dmysql.functional.transaction;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -6,6 +6,7 @@ import pl.dnwk.dmysql.cluster.Cluster;
 import pl.dnwk.dmysql.cluster.Nodes;
 import pl.dnwk.dmysql.common.ArrayBuilder;
 import pl.dnwk.dmysql.common.Async;
+import pl.dnwk.dmysql.functional.FunctionalTestCase;
 import pl.dnwk.dmysql.sql.executor.Result;
 import pl.dnwk.dmysql.sql.executor.select.RowMapper;
 

@@ -22,6 +22,10 @@ public class Nodes {
         return new ArrayList<>(connections.keySet());
     }
 
+    public Connection getConnection(String connection) {
+        return this.connections.get(connection);
+    }
+
     public Map<String, ResultSet> executeQuery(Map<String, String> queries) {
         try {
             var threads = new HashMap<String, Thread>();

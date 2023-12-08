@@ -90,7 +90,7 @@ public class IdentificationVariablesExtractor {
                             i
                     ));
                 } else {
-                    throw new RuntimeException("Not able to determine table for " + e);
+                    throw new RuntimeException("Not able to determine table for column '" + e + "'");
                 }
             } else {
                 var alias = expr.alias;

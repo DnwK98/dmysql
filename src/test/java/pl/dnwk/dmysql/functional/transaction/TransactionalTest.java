@@ -1,13 +1,14 @@
-package pl.dnwk.dmysql.functional;
+package pl.dnwk.dmysql.functional.transaction;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pl.dnwk.dmysql.cluster.Cluster;
+import pl.dnwk.dmysql.functional.FunctionalTestCase;
 import pl.dnwk.dmysql.sql.executor.Result;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TransactionalTest extends FunctionalTestCase{
+public class TransactionalTest extends FunctionalTestCase {
 
     @Override
     @BeforeEach
