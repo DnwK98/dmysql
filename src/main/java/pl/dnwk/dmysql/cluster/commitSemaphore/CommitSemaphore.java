@@ -1,4 +1,4 @@
-package pl.dnwk.dmysql.sql.executor;
+package pl.dnwk.dmysql.cluster.commitSemaphore;
 
 import pl.dnwk.dmysql.common.Async;
 import pl.dnwk.dmysql.common.Log;
@@ -6,15 +6,31 @@ import pl.dnwk.dmysql.common.Log;
 /**
  * Hypothetical race prevention.
  * It would work when we assume that we have only one instance of this application.
- * This would create bottleneck which this application will become, so drop this solution.
+ * This would create bottleneck which this application will become, it could run only in one instance.
  * Other solution would be usage of distributed lock with these semaphores for multiple instances of this application
  */
-public class RacePrevention {
-    private static Integer querySemaphore = 0;
-    private static Integer commitSemaphore = 0;
-    private static final Object lock = new Object();
+public class CommitSemaphore {
+    private Integer querySemaphore = 0;
+    private Integer commitSemaphore = 0;
+    private final Object lock = new Object();
 
-    public static void inQuery() {
+    public void acquire(String statement) {
+        if(statement.contains("XA COMMIT")) {
+            acquireCommit();
+        } else {
+            acquireQuery();
+        }
+    }
+
+    public void release(String statement) {
+        if(statement.contains("XA COMMIT")) {
+            releaseCommit();
+        } else {
+            releaseQuery();
+        }
+    }
+
+    private void acquireQuery() {
         var wait = true;
         while (wait) {
             wait = false;
@@ -32,13 +48,13 @@ public class RacePrevention {
         }
     }
 
-    public static void outQuery() {
+    private void releaseQuery() {
         synchronized (lock) {
             querySemaphore--;
         }
     }
 
-    public static void inCommit() {
+    private void acquireCommit() {
         synchronized (lock) {
             commitSemaphore++;
         }
@@ -61,7 +77,7 @@ public class RacePrevention {
         }
     }
 
-    public static void outCommit() {
+    private void releaseCommit() {
         synchronized (lock) {
             commitSemaphore--;
         }

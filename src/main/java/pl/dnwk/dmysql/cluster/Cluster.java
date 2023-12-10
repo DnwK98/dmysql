@@ -1,5 +1,8 @@
 package pl.dnwk.dmysql.cluster;
 
+import pl.dnwk.dmysql.cluster.commitSemaphore.CommitSemaphore;
+import pl.dnwk.dmysql.cluster.commitSemaphore.NullCommitSemaphore;
+import pl.dnwk.dmysql.common.Async;
 import pl.dnwk.dmysql.common.Log;
 import pl.dnwk.dmysql.config.ClusterConfig;
 import pl.dnwk.dmysql.config.element.NodeConfig;
@@ -24,6 +27,10 @@ public class Cluster {
 
     public void init() {
         try {
+            var commitSemaphore = this.config.commitSemaphore ?
+                    new CommitSemaphore():
+                    new NullCommitSemaphore();
+
             synchronized (connections) {
                 for (int i = 0; i < config.poolSize; ++i) {
                     Map<String, Connection> nodes = new HashMap<>();
@@ -35,7 +42,7 @@ public class Cluster {
                         nodes.put(nodeName, nodeConnection);
                     }
 
-                    connections.put(new Nodes(nodes), CONNECTION_AVAILABLE);
+                    connections.put(new Nodes(nodes, commitSemaphore), CONNECTION_AVAILABLE);
                 }
             }
         } catch (SQLException e) {
@@ -59,23 +66,18 @@ public class Cluster {
     }
 
     public Nodes get() {
-        try {
-            while (true) {
-                synchronized (connections) {
-                    for (Nodes pack : connections.keySet()) {
-                        if (connections.get(pack) == CONNECTION_AVAILABLE) {
-                            connections.put(pack, CONNECTION_NOT_AVAILABLE);
-                            return pack;
-                        }
+        while (true) {
+            synchronized (connections) {
+                for (Nodes pack : connections.keySet()) {
+                    if (connections.get(pack) == CONNECTION_AVAILABLE) {
+                        connections.put(pack, CONNECTION_NOT_AVAILABLE);
+                        return pack;
                     }
                 }
-                Log.warning("Connections pool to small, waiting for available Nodes...");
-
-                //noinspection BusyWait
-                Thread.sleep(1000);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            Log.warning("Connections pool to small, waiting for available Nodes...");
+
+            Async.sleep(1000);
         }
     }
 

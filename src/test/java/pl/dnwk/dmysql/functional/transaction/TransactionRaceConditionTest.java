@@ -4,8 +4,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pl.dnwk.dmysql.cluster.Cluster;
 import pl.dnwk.dmysql.cluster.Nodes;
+import pl.dnwk.dmysql.cluster.commitSemaphore.CommitSemaphore;
 import pl.dnwk.dmysql.common.ArrayBuilder;
 import pl.dnwk.dmysql.common.Async;
+import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.functional.FunctionalTestCase;
 import pl.dnwk.dmysql.sql.executor.Result;
 import pl.dnwk.dmysql.sql.executor.select.RowMapper;
@@ -19,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * This class shows race, on SELECT - INSERT, and inconsistent results between nodes.
  *
- * @see pl.dnwk.dmysql.sql.executor.RacePrevention
+ * @see CommitSemaphore
  */
 public class TransactionRaceConditionTest extends FunctionalTestCase {
 
@@ -28,6 +30,14 @@ public class TransactionRaceConditionTest extends FunctionalTestCase {
     public void setUp() {
         super.setUp();
         server.getCluster().setTransactionIsolationLevel(Cluster.IsolationLevel.READ_COMMITTED);
+    }
+
+    @Override
+    public Config config() {
+        var config = super.config();
+        config.cluster.commitSemaphore = true;
+
+        return config;
     }
 
     @Test
@@ -47,6 +57,7 @@ public class TransactionRaceConditionTest extends FunctionalTestCase {
     /**
      * This test is disabled, because it's result is unpredictable,
      * but shows clue of this problem.
+     * To see result add @Test, and enable/disable commit semaphore.
      */
     public void atomicallyInsertRecordsIntoTwoShardsAsync() {
         var i = 0;

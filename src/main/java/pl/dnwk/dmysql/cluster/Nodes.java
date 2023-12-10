@@ -1,5 +1,6 @@
 package pl.dnwk.dmysql.cluster;
 
+import pl.dnwk.dmysql.cluster.commitSemaphore.CommitSemaphore;
 import pl.dnwk.dmysql.common.Log;
 
 import java.sql.Connection;
@@ -12,10 +13,12 @@ import java.util.Map;
 
 public class Nodes {
 
-    Map<String, Connection> connections;
+    final Map<String, Connection> connections;
+    private final CommitSemaphore commitSemaphore;
 
-    public Nodes(Map<String, Connection> connections) {
+    public Nodes(Map<String, Connection> connections, CommitSemaphore commitSemaphore) {
         this.connections = connections;
+        this.commitSemaphore = commitSemaphore;
     }
 
     public List<String> names() {
@@ -27,9 +30,13 @@ public class Nodes {
     }
 
     public Map<String, ResultSet> executeQuery(Map<String, String> queries) {
+        var results = new HashMap<String, ResultSet>();
+        if(queries.isEmpty()) {
+            return results;
+        }
         try {
             var threads = new HashMap<String, Thread>();
-            var results = new HashMap<String, ResultSet>();
+            commitSemaphore.acquire(queries.values().stream().findFirst().get());
 
             for (var node : queries.keySet()) {
                 var query = queries.get(node);
@@ -56,12 +63,18 @@ public class Nodes {
             return results;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } finally {
+            commitSemaphore.release(queries.values().stream().findFirst().get());
         }
     }
 
     public void executeStatement(Map<String, String> statements) {
+        if(statements.isEmpty()) {
+            return;
+        }
         try {
             var threads = new ArrayList<Thread>();
+            commitSemaphore.acquire(statements.values().stream().findFirst().get());
 
             for (var node : statements.keySet()) {
                 var statement = statements.get(node);
@@ -82,6 +95,8 @@ public class Nodes {
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } finally {
+            commitSemaphore.release(statements.values().stream().findFirst().get());
         }
     }
 }

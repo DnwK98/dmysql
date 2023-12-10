@@ -7,6 +7,7 @@ import java.util.Map;
 
 
 public class ClusterConfig {
+    public boolean commitSemaphore = false;
     public int poolSize = 2;
     public Map<String, NodeConfig> nodes = new HashMap<>() {{
         put("dmysql_1", NodeConfig.create()
