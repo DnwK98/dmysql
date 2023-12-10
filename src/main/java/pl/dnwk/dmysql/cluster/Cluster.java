@@ -83,14 +83,14 @@ public class Cluster {
 
     public void restore(Nodes nodes) {
         try {
-            // TODO clear nodes
+            nodes.rollbackTransactions();
 
             synchronized (connections) {
                 connections.put(nodes, CONNECTION_AVAILABLE);
             }
             Log.debug("Nodes restored to Cluster");
         } catch (Exception e) {
-            Log.error("Failed to restore ConnectionPack in cluster");
+            Log.error("Failed to restore ConnectionPack in cluster:" + e);
         }
     }
 

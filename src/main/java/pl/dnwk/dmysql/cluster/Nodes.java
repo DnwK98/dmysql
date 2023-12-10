@@ -14,6 +14,7 @@ import java.util.Map;
 public class Nodes {
 
     final Map<String, Connection> connections;
+    final Map<String, String> transactions =  new HashMap<>();
     private final CommitSemaphore commitSemaphore;
 
     public Nodes(Map<String, Connection> connections, CommitSemaphore commitSemaphore) {
@@ -74,6 +75,7 @@ public class Nodes {
         }
         try {
             var threads = new ArrayList<Thread>();
+            manageTransactions(statements);
             commitSemaphore.acquire(statements.values().stream().findFirst().get());
 
             for (var node : statements.keySet()) {
@@ -97,6 +99,26 @@ public class Nodes {
             throw new RuntimeException(e);
         } finally {
             commitSemaphore.release(statements.values().stream().findFirst().get());
+        }
+    }
+
+    public void rollbackTransactions() {
+        for (var node: transactions.keySet().toArray(new String[0])) {
+            var transaction = transactions.get(node);
+            executeStatement(new HashMap<>(){{put(node, "XA END" + transaction);}});
+            executeStatement(new HashMap<>(){{put(node, "XA ROLLBACK" + transaction);}});
+        }
+    }
+
+    private void manageTransactions(Map<String, String> statements) {
+        for (var node: statements.keySet()) {
+            var statement = statements.get(node);
+            if(statement.contains("XA START")) {
+                transactions.put(node, statement.replace("XA START", ""));
+            }
+            if(statement.contains("XA COMMIT") || statement.contains("XA ROLLBACK")) {
+                transactions.remove(node);
+            }
         }
     }
 }
