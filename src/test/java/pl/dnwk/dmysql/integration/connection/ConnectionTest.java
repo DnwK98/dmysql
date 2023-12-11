@@ -2,6 +2,7 @@ package pl.dnwk.dmysql.integration.connection;
 
 import org.junit.jupiter.api.Test;
 import pl.dnwk.dmysql.common.Async;
+import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.connection.Connection;
 import pl.dnwk.dmysql.integration.IntegrationTestCase;
 
@@ -12,6 +13,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ConnectionTest extends IntegrationTestCase {
+
+    @Override
+    public Config config() {
+        var config = super.config();
+        config.cluster.poolSize = 2;
+
+        return config;
+    }
+
     @Test
     public void createsConnection() {
         // When

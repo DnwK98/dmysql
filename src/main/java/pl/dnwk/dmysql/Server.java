@@ -50,7 +50,7 @@ public class Server {
     }
 
     public void stop() {
-        Log.info("Stopping (" + connections.size() + ") connections...");
+        Log.debug("Stopping (" + connections.size() + ") connections...");
         synchronized (connections) {
             for (Connection connection: new ArrayList<>(connections)) {
                 connection.close();
@@ -58,7 +58,7 @@ public class Server {
         }
 
         if(tcpServer != null) {
-            Log.info("Stopping TCP server...");
+            Log.debug("Stopping TCP server...");
             tcpServer.stop();
         }
 

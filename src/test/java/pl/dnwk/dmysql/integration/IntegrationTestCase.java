@@ -3,6 +3,7 @@ package pl.dnwk.dmysql.integration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import pl.dnwk.dmysql.Server;
+import pl.dnwk.dmysql.TestCluster;
 import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.config.element.NodeConfig;
 import pl.dnwk.dmysql.sharding.key.IntShardKey;
@@ -20,27 +21,8 @@ public class IntegrationTestCase {
 
     public Config config() {
         var config = new Config();
-        config.cluster.poolSize = 2;
-        config.cluster.nodes = new HashMap<>() {{
-            put("dmysql_1", NodeConfig.create()
-                    .setUrl("mysql://localhost:3309/dmysql_1")
-                    .setUser("root")
-                    .setPassword("rootpass")
-                    .setSchema("dmysql_1")
-            );
-            put("dmysql_2", NodeConfig.create()
-                    .setUrl("mysql://localhost:3309/dmysql_2")
-                    .setUser("root")
-                    .setPassword("rootpass")
-                    .setSchema("dmysql_2")
-            );
-            put("dmysql_3", NodeConfig.create()
-                    .setUrl("mysql://localhost:3309/dmysql_3")
-                    .setUser("root")
-                    .setPassword("rootpass")
-                    .setSchema("dmysql_3")
-            );
-        }};
+
+        config.cluster = TestCluster.get();
 
         config.schema = new DistributedSchema() {{
             add(Table.OnAll("countries"));

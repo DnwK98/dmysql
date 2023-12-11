@@ -27,10 +27,22 @@ public class Main {
         config.cluster.poolSize = 4;
         config.cluster.commitSemaphore = false;
         config.cluster.nodes.put("dmysql_1", NodeConfig.create()
-                .setUrl("mysql://localhost:3306/test")
-                .setUser("root")
-                .setPassword("")
-                .setSchema("test")
+                .setUrl("mysql://mysql-node-1:3306/dmysql_db")
+                .setUser("dmysql")
+                .setPassword("change-me-nf342bfc2")
+                .setSchema("dmysql_db")
+        );
+        config.cluster.nodes.put("dmysql_2", NodeConfig.create()
+                .setUrl("mysql://mysql-node-2:3306/dmysql_db")
+                .setUser("dmysql")
+                .setPassword("change-me-nf342bfc2")
+                .setSchema("dmysql_db")
+        );
+        config.cluster.nodes.put("dmysql_3", NodeConfig.create()
+                .setUrl("mysql://mysql-node-3:3306/dmysql_db")
+                .setUser("dmysql")
+                .setPassword("change-me-nf342bfc2")
+                .setSchema("dmysql_db")
         );
 
         return config;

@@ -37,6 +37,7 @@ public class Nodes {
         }
         try {
             var threads = new HashMap<String, Thread>();
+            var errors = new ArrayList<String>();
             commitSemaphore.acquire(queries.values().stream().findFirst().get());
 
             for (var node : queries.keySet()) {
@@ -51,7 +52,10 @@ public class Nodes {
                             results.put(node, result);
                         }
                     } catch (SQLException e) {
-                        throw new RuntimeException(e);
+                        Log.error("Error during executing query (" + query + "): " + e.getMessage());
+                        synchronized (errors) {
+                            errors.add(e.getMessage());
+                        }
                     }
                 });
                 t.start();
@@ -59,6 +63,9 @@ public class Nodes {
             }
             for (var thread : threads.values()) {
                 thread.join();
+            }
+            if(!errors.isEmpty()) {
+                throw new RuntimeException(errors.stream().findFirst().get());
             }
 
             return results;
@@ -75,6 +82,7 @@ public class Nodes {
         }
         try {
             var threads = new ArrayList<Thread>();
+            var errors = new ArrayList<String>();
             manageTransactions(statements);
             commitSemaphore.acquire(statements.values().stream().findFirst().get());
 
@@ -86,7 +94,10 @@ public class Nodes {
                     try {
                         connection.prepareStatement(statement).execute();
                     } catch (SQLException e) {
-                        throw new RuntimeException(e);
+                        Log.error("Error during executing statement (" + statement + "): " + e.getMessage());
+                        synchronized (errors) {
+                            errors.add(e.getMessage());
+                        }
                     }
                 });
                 t.start();
@@ -94,6 +105,9 @@ public class Nodes {
             }
             for (var thread : threads) {
                 thread.join();
+            }
+            if(!errors.isEmpty()) {
+                throw new RuntimeException(errors.stream().findFirst().get());
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
