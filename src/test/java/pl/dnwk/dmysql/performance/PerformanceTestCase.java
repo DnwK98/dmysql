@@ -24,7 +24,9 @@ public abstract class PerformanceTestCase {
 
     protected Server server;
 
-    @Test
+    /**
+     * Add @Test annotation to this method to run performance tests
+     */
     public void test() {
         var connection = server.createConnection();
 
