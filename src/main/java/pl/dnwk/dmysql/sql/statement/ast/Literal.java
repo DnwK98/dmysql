@@ -5,6 +5,7 @@ public class Literal implements ValueExpression {
     public static final String STRING = "STRING";
     public static final String BOOLEAN = "BOOLEAN";
     public static final String NUMERIC = "NUMERIC";
+    public static final String NULL = "NULL";
 
     public String type;
     public String value;
@@ -35,6 +36,13 @@ public class Literal implements ValueExpression {
 
         return l;
 
+    }
+
+    public static ValueExpression Null() {
+        var l = new Literal();
+        l.type = NULL;
+
+        return l;
     }
 
     public String toString() {

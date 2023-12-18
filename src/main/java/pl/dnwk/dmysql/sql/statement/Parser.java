@@ -286,6 +286,10 @@ public class Parser {
             lexer.match(T_FLOAT);
             return Literal.Numeric(lexer.getToken().value);
         }
+        if (lexer.nextIs(T_NULL)) {
+            lexer.match(T_NULL);
+            return Literal.Null();
+        }
 
         PathExpression pathExpression = new PathExpression();
         lexer.match(T_IDENTIFIER);

@@ -50,7 +50,7 @@ public class SelectExecutor {
             var resultArray = result.toArray();
             if (originalStatement.groupByClause != null) {
                 resultArray = applyGroupBy(originalStatement, resultArray);
-            } else if (hasAggregation(statement)) {
+            } else if (hasAggregation(originalStatement)) {
                 resultArray = new Object[][]{applyAggregation(originalStatement, resultArray)};
             }
 

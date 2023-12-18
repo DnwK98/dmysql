@@ -36,6 +36,10 @@ public class RowMapper {
                 } else {
                     row[i] = result.getString(i + 1);
                 }
+
+                if(result.wasNull()) {
+                    row[i] = null;
+                }
             }
 
             return row;

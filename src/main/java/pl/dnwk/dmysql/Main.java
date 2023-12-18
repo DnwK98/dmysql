@@ -16,18 +16,34 @@ public class Main {
 
         server.start();
         server.createSocket();
+
+        var c = server.createConnection();
+        FixturesLoader.load(c);
+        c.close();
     }
 
     public static Config config() {
         var config = new Config();
         config.port = 9090;
 
-        config.schema
-                .add(Table.OnAll("countries")
-                        .primaryKey(new String[]{"code"})
-                        .addColumn(new Column("code", "VARCHAR(2)"))
-                        .addColumn(new Column("name", "VARCHAR(256)"))
-                );
+        config.schema.add(Table.OnAll("countries")
+                .primaryKey(new String[]{"code"})
+                .addColumn(new Column("code", "VARCHAR(2)"))
+                .addColumn(new Column("name", "VARCHAR(256)"))
+        );
+        config.schema.add(Table.Sharded("users", new IntShardKey("id"))
+                .primaryKey(new String[]{"id"})
+                .addColumn(new Column("id", "int"))
+                .addColumn(new Column("name", "VARCHAR(256)", true))
+        );
+        config.schema.add(Table.Sharded("cars", new IntShardKey("owner_id"))
+                .primaryKey(new String[]{"registration", "owner_id"})
+                .addColumn(new Column("registration", "VARCHAR(32)"))
+                .addColumn(new Column("owner_id", "int"))
+                .addColumn(new Column("model", "VARCHAR(256)"))
+                .addColumn(new Column("production_country", "VARCHAR(2)"))
+                .addColumn(new Column("mileage", "DECIMAL(10,1)", true))
+        );
 
         config.cluster.poolSize = 4;
         config.cluster.commitSemaphore = false;

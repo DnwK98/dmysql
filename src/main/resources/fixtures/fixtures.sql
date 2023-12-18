@@ -1,0 +1,18 @@
+DELETE FROM users;
+DELETE FROM countries;
+DELETE FROM cars;
+INSERT INTO users (id, ldap) VALUES (1, 'Mateusz'), (2, 'Karol'), (3, 'Eryk'), (4, 'Patrycja');
+INSERT INTO users (id, ldap) VALUES (5, 'Jan'),(6, 'Leon'), (7, 'Renata'), (8, 'Marta');
+INSERT INTO users (id, ldap) VALUES (9, 'Robert'), (10, 'Szymon');
+INSERT INTO countries (code, name) VALUES ('PL', 'Poland'), ('US', 'United States');
+INSERT INTO countries (code, name) VALUES ('RU', 'Russia'), ('SE', 'Sweden'), ('MX', 'Mexico');
+INSERT INTO countries (code, name) VALUES ('DE', 'Germany'), ('CZ', 'Czechia'), ('JP', 'Japan');
+INSERT INTO countries (code, name) VALUES ('IL', 'Israel'), ('IN', 'India'), ('HU', 'Hungary');
+INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES ('GD 1234', 1, 'Honda', 'JP', 55000);
+INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES ('WI 53D2', 4, 'Ford', 'US', 83000);
+INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES ('DW 12H1', 2, 'Audi', 'DE', 127000);
+INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES ('WB 721L', 2, 'Mercedes', 'DE', 348000);
+INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES ('BI 22E1', 3, 'BMW', 'DE', 73000);
+INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES ('BI K731', 3, 'BMW', 'DE', 235000);
+INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES ('WB 7622', 3, 'Porsche', 'DE', null);
+INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES ('BI 9K36', 3, 'Honda', 'JP', 75000);

@@ -246,6 +246,9 @@ public class SqlWalker {
                 sql.append(literal.value);
                 sql.append("'");
             }
+            if (literal.type.equals(Literal.NULL)) {
+                sql.append("null");
+            }
         }
 
         if (expression instanceof Function) {
