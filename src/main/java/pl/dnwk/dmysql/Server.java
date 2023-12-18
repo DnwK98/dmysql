@@ -5,6 +5,7 @@ import pl.dnwk.dmysql.common.Log;
 import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.connection.Connection;
 import pl.dnwk.dmysql.sharding.schema.DistributedSchema;
+import pl.dnwk.dmysql.sharding.schema.SchemaInitiator;
 import pl.dnwk.dmysql.tcp.TcpServer;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ public class Server {
     private final List<Connection> connections = new LinkedList<>();
     private Cluster cluster;
     private TcpServer tcpServer = null;
+    private SchemaInitiator schemaInitiator = new SchemaInitiator();
 
     public Server(Config config) {
         this.config = config;
@@ -25,6 +27,10 @@ public class Server {
     public void start() {
         cluster = new Cluster(config.cluster);
         cluster.init();
+
+        var nodes = cluster.get();
+        schemaInitiator.initialize(nodes, config.schema);
+        cluster.restore(nodes);
     }
 
     public void createSocket() {

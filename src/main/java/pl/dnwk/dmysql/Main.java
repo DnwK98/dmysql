@@ -3,6 +3,7 @@ package pl.dnwk.dmysql;
 import pl.dnwk.dmysql.common.Log;
 import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.config.element.NodeConfig;
+import pl.dnwk.dmysql.sharding.schema.Column;
 import pl.dnwk.dmysql.sharding.schema.Table;
 
 
@@ -22,10 +23,15 @@ public class Main {
         config.port = 9090;
 
         config.schema
-                .add(Table.OnAll("countries"));
+                .add(Table.OnAll("countries")
+                        .primaryKey(new String[]{"code"})
+                        .addColumn(new Column("code", "VARCHAR(2)"))
+                        .addColumn(new Column("name", "VARCHAR(256)"))
+                );
 
         config.cluster.poolSize = 4;
         config.cluster.commitSemaphore = false;
+
         config.cluster.nodes.put("dmysql_1", NodeConfig.create()
                 .setUrl("mysql://mysql-node-1:3306/dmysql_db")
                 .setUser("dmysql")

@@ -7,6 +7,7 @@ import pl.dnwk.dmysql.TestCluster;
 import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.config.element.NodeConfig;
 import pl.dnwk.dmysql.sharding.key.IntShardKey;
+import pl.dnwk.dmysql.sharding.schema.Column;
 import pl.dnwk.dmysql.sharding.schema.DistributedSchema;
 import pl.dnwk.dmysql.sharding.schema.Table;
 
@@ -25,9 +26,24 @@ public class IntegrationTestCase {
         config.cluster = TestCluster.get();
 
         config.schema = new DistributedSchema() {{
-            add(Table.OnAll("countries"));
-            add(Table.Sharded("users", new IntShardKey("id")));
-            add(Table.Sharded("cars", new IntShardKey("owner_id")));
+            add(Table.OnAll("countries")
+                    .primaryKey(new String[]{"code"})
+                    .addColumn(new Column("code", "VARCHAR(2)"))
+                    .addColumn(new Column("name", "VARCHAR(256)"))
+            );
+            add(Table.Sharded("users", new IntShardKey("id"))
+                    .primaryKey(new String[]{"id"})
+                    .addColumn(new Column("id", "int"))
+                    .addColumn(new Column("name", "VARCHAR(256)", true))
+            );
+            add(Table.Sharded("cars", new IntShardKey("owner_id"))
+                    .primaryKey(new String[]{"registration", "owner_id"})
+                    .addColumn(new Column("registration", "VARCHAR(32)"))
+                    .addColumn(new Column("owner_id", "int"))
+                    .addColumn(new Column("model", "VARCHAR(256)"))
+                    .addColumn(new Column("production_country", "VARCHAR(2)"))
+                    .addColumn(new Column("mileage", "DECIMAL(10,1)", true))
+            );
         }};
 
         return config;

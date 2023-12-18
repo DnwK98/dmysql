@@ -8,6 +8,7 @@ import pl.dnwk.dmysql.common.Log;
 import pl.dnwk.dmysql.config.Config;
 import pl.dnwk.dmysql.config.element.NodeConfig;
 import pl.dnwk.dmysql.sharding.key.IntShardKey;
+import pl.dnwk.dmysql.sharding.schema.Column;
 import pl.dnwk.dmysql.sharding.schema.DistributedSchema;
 import pl.dnwk.dmysql.sharding.schema.Table;
 
@@ -23,11 +24,27 @@ public class FunctionalTestCase {
     public Config config() {
         var config = new Config();
         config.cluster = TestCluster.get();
+        config.cluster.commitSemaphore = false;
 
         config.schema = new DistributedSchema() {{
-            add(Table.OnAll("countries"));
-            add(Table.Sharded("users", new IntShardKey("id")));
-            add(Table.Sharded("cars", new IntShardKey("owner_id")));
+            add(Table.OnAll("countries")
+                    .primaryKey(new String[]{"code"})
+                    .addColumn(new Column("code", "VARCHAR(2)"))
+                    .addColumn(new Column("name", "VARCHAR(256)"))
+            );
+            add(Table.Sharded("users", new IntShardKey("id"))
+                    .primaryKey(new String[]{"id"})
+                    .addColumn(new Column("id", "int"))
+                    .addColumn(new Column("name", "VARCHAR(256)", true))
+            );
+            add(Table.Sharded("cars", new IntShardKey("owner_id"))
+                    .primaryKey(new String[]{"registration", "owner_id"})
+                    .addColumn(new Column("registration", "VARCHAR(32)"))
+                    .addColumn(new Column("owner_id", "int"))
+                    .addColumn(new Column("model", "VARCHAR(256)"))
+                    .addColumn(new Column("production_country", "VARCHAR(2)"))
+                    .addColumn(new Column("mileage", "DECIMAL(10,1)", true))
+            );
         }};
 
         return config;
@@ -36,11 +53,7 @@ public class FunctionalTestCase {
     @BeforeEach
     public void setUp() {
         Log.setLevel(Log.DEBUG);
-        prepareSchema(new String[]{
-                "CREATE TABLE countries (code VARCHAR(2) NOT NULL, name VARCHAR(256) NOT NULL)",
-                "CREATE TABLE users (id int NOT NULL, name VARCHAR(256) NULL)",
-                "CREATE TABLE cars (registration VARCHAR(32) NOT NULL, owner_id int NOT NULL, model VARCHAR(256) NOT NULL, production_country VARCHAR(2) NOT NULL, mileage DECIMAL(10,1) NULL)",
-        });
+        prepareSchema(new String[0]);
 
         server = new Server(config());
         server.start();

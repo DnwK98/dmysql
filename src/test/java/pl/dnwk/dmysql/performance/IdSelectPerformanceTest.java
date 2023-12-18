@@ -7,6 +7,7 @@ public class IdSelectPerformanceTest extends PerformanceTestCase {
     @Override
     public String[] beforeAll() {
         return ArrayBuilder.create(new String[8])
+                .add("DELETE FROM users")
                 .add("INSERT INTO users(id, name) VALUES (1, 'aaaa')")
                 .add("INSERT INTO users(id, name) VALUES (2, 'bbbb')")
                 .add("INSERT INTO users(id, name) VALUES (3, 'cccc')")

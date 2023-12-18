@@ -13,12 +13,15 @@ public class BigResultSelectPerformanceTest extends PerformanceTestCase {
     public String[] beforeAll() {
         var queries = ArrayBuilder.create(new String[8]);
 
+        queries.add("DELETE FROM users");
+        queries.add("DELETE FROM countries");
+        queries.add("DELETE FROM cars");
         queries.add("INSERT INTO countries (code, name) VALUES ('PL', 'Poland')");
         for (var i = 1; i <= 3; i++) {
             queries.add("INSERT INTO users (id, name) VALUES (" + i + ", 'name-" + i + "')");
             for (var j = 0; j < 400; j++) {
                 queries.add("INSERT INTO cars (registration, owner_id, model, production_country, mileage) VALUES " +
-                        "('WB 12" + i + "', " + i + ", 'Mercedes', 'PL', 100" + ((j + i) * 100) + ")");
+                        "('WB 12" + i + j + "', " + i + j + ", 'Mercedes', 'PL', 100" + ((j + i) * 100) + ")");
             }
         }
 
@@ -39,6 +42,8 @@ public class BigResultSelectPerformanceTest extends PerformanceTestCase {
     public String[] afterAll() {
         return ArrayBuilder.create(new String[8])
                 .add("DELETE FROM users")
+                .add("DELETE FROM countries")
+                .add("DELETE FROM cars")
                 .toArray();
     }
 }
