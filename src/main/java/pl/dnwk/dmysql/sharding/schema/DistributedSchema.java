@@ -1,11 +1,11 @@
 package pl.dnwk.dmysql.sharding.schema;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DistributedSchema {
 
-    public Map<String, Table> tables = new HashMap<>();
+    public Map<String, Table> tables = new LinkedHashMap<>();
 
     public void add(Table table) {
         tables.put(table.tableName, table);

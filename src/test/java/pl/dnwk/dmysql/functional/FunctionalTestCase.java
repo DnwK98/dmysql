@@ -32,6 +32,11 @@ public class FunctionalTestCase {
                     .addColumn(new Column("code", "VARCHAR(2)"))
                     .addColumn(new Column("name", "VARCHAR(256)"))
             );
+            add(Table.OnAll("workshops")
+                    .primaryKey(new String[]{"id"})
+                    .addColumn(new Column("id", "int"))
+                    .addColumn(new Column("name", "VARCHAR(256)"))
+            );
             add(Table.Sharded("users", new IntShardKey("id"))
                     .primaryKey(new String[]{"id"})
                     .addColumn(new Column("id", "int"))
@@ -39,11 +44,39 @@ public class FunctionalTestCase {
             );
             add(Table.Sharded("cars", new IntShardKey("owner_id"))
                     .primaryKey(new String[]{"registration", "owner_id"})
+                    .foreignKey("users", new String[]{"owner_id"}, new String[]{"id"})
+                    .foreignKey("countries", new String[]{"production_country"}, new String[]{"code"})
                     .addColumn(new Column("registration", "VARCHAR(32)"))
                     .addColumn(new Column("owner_id", "int"))
                     .addColumn(new Column("model", "VARCHAR(256)"))
                     .addColumn(new Column("production_country", "VARCHAR(2)"))
                     .addColumn(new Column("mileage", "DECIMAL(10,1)", true))
+            );
+            add(Table.Sharded("cars_workshops", new IntShardKey("owner_id"))
+                    .primaryKey(new String[]{"registration", "owner_id", "workshop_id"})
+                    .foreignKey("cars", new String[]{"registration", "owner_id"}, new String[]{"registration", "owner_id"})
+                    .foreignKey("workshops", new String[]{"workshop_id"}, new String[]{"id"})
+                    .addColumn(new Column("registration", "VARCHAR(32)"))
+                    .addColumn(new Column("owner_id", "int"))
+                    .addColumn(new Column("workshop_id", "int"))
+            );
+            add(Table.Sharded("invoices", new IntShardKey("user_id"))
+                    .primaryKey(new String[]{"id", "user_id"})
+                    .foreignKey("users", new String[]{"user_id"}, new String[]{"id"})
+                    .foreignKey("workshops", new String[]{"workshop_id"}, new String[]{"id"})
+                    .addColumn(new Column("id", "int"))
+                    .addColumn(new Column("user_id", "int"))
+                    .addColumn(new Column("workshop_id", "int"))
+                    .addColumn(new Column("amount", "DECIMAL(10,2)"))
+            );
+            add(Table.Sharded("invoice_items", new IntShardKey("user_id"))
+                    .primaryKey(new String[]{"id", "invoice_id", "user_id"})
+                    .foreignKey("invoices", new String[]{"invoice_id", "user_id"}, new String[]{"id", "user_id"})
+                    .addColumn(new Column("id", "int"))
+                    .addColumn(new Column("invoice_id", "int"))
+                    .addColumn(new Column("user_id", "int"))
+                    .addColumn(new Column("name", "VARCHAR(256)"))
+                    .addColumn(new Column("amount", "DECIMAL(10,2)"))
             );
         }};
 

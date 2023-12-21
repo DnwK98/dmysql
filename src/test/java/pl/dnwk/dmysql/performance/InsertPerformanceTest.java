@@ -19,10 +19,10 @@ public class InsertPerformanceTest extends PerformanceTestCase {
     @Override
     public String[] loop() {
         return ArrayBuilder.create(new String[8])
-                .add("INSERT INTO users(id, name) VALUES (1, 'aaaa'), (2, 'bbbb'), (3, 'cccc'), (4, 'dddd')")
-                .add("INSERT INTO users(id, name) VALUES (5, '5aaaa'), (6, '6bbbb'), (7, '7cccc'), (8, '8dddd')")
-                .add("INSERT INTO users(id, name) VALUES (9, '9aaaa'), (10, '10bbbb'), (11, '11cccc'), (12, '12dddd')")
-                .add("INSERT INTO users(id, name) VALUES (13, '13aaaa'), (14, '14bbbb'), (15, '15cccc'), (16, '16dddd')")
+                .add("INSERT INTO users(id, name) VALUES (1, 'aaaa'), (2, 'bbbb'), (5, 'cccc'), (4, 'dddd')")
+                .add("INSERT INTO users(id, name) VALUES (3, '5aaaa'), (6, '6bbbb'), (7, '7cccc'), (9, '8dddd')")
+                .add("INSERT INTO users(id, name) VALUES (8, '9aaaa'), (14, '10bbbb'), (11, '11cccc'), (12, '12dddd')")
+                .add("INSERT INTO users(id, name) VALUES (13, '13aaaa'), (10, '14bbbb'), (15, '15cccc'), (16, '16dddd')")
                 .toArray();
     }
 

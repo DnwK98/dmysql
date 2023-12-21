@@ -47,6 +47,12 @@ public class RowsComparator implements Comparator<Object[]> {
                         second[columnNum] != null ? (Float) second[columnNum] : Float.MIN_VALUE
                 );
             }
+            if (first[columnNum] instanceof Double || second[columnNum] instanceof Double) {
+                res = multiplier * Double.compare(
+                        first[columnNum] != null ? (Double) first[columnNum] : Double.MIN_VALUE,
+                        second[columnNum] != null ? (Double) second[columnNum] : Double.MIN_VALUE
+                );
+            }
             if (res != 0) {
                 return res;
             }

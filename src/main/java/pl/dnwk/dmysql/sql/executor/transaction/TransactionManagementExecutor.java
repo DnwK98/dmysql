@@ -58,11 +58,19 @@ public class TransactionManagementExecutor {
             throw new RuntimeException("There is no active transaction");
         }
 
+        // End transaction
         nodes.executeStatement(onAll("XA END '{id}'"));
-        nodes.executeStatement(onAll("XA PREPARE '{id}'"));
-        nodes.executeStatement(onAll("XA COMMIT '{id}'"));
 
-        activeTransaction = null;
+        try {
+            // Prepare transaction can fail when there is constraint violation
+            nodes.executeStatement(onAll("XA PREPARE '{id}'"));
+            nodes.executeStatement(onAll("XA COMMIT '{id}'"));
+        } catch (Exception e) {
+            nodes.executeStatement(onAll("XA ROLLBACK '{id}'"));
+            throw new RuntimeException("Transaction commit failed");
+        } finally {
+            activeTransaction = null;
+        }
     }
 
     public Map<String, String> onAll(String sql) {

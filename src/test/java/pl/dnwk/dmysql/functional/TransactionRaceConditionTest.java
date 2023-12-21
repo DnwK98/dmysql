@@ -1,4 +1,4 @@
-package pl.dnwk.dmysql.functional.transaction;
+package pl.dnwk.dmysql.functional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

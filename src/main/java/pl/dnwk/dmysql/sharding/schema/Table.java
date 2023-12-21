@@ -12,6 +12,7 @@ public class Table {
     public ShardKey shardKey;
     public List<Column> columns = new ArrayList<>();
     public String[] primaryKey;
+    public ArrayList<String> foreignKeys = new ArrayList<>();
 
     public static Table OnAll(String tableName) {
         var t = new Table();
@@ -70,9 +71,18 @@ public class Table {
         if(primaryKey != null) {
             columnsDefs.add("PRIMARY KEY(" + String.join(", ", primaryKey) + ")");
         }
+        for (var key: foreignKeys) {
+            columnsDefs.add(key);
+        }
         s.append(String.join(", ", columnsDefs.toArray()));
         s.append(")");
 
         return s.toString();
+    }
+
+    public Table foreignKey(String referencedTableName, String[] thisColumns, String[] otherColumns) {
+        foreignKeys.add("FOREIGN KEY (" + String.join(", ", thisColumns) + ") REFERENCES " + referencedTableName + " (" + String.join(", ", otherColumns) + ")");
+
+        return this;
     }
 }

@@ -1,9 +1,8 @@
-package pl.dnwk.dmysql.functional.transaction;
+package pl.dnwk.dmysql.functional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pl.dnwk.dmysql.cluster.Cluster;
-import pl.dnwk.dmysql.functional.FunctionalTestCase;
 import pl.dnwk.dmysql.sql.executor.Result;
 
 import static org.junit.jupiter.api.Assertions.*;

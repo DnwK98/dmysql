@@ -5,11 +5,6 @@ import pl.dnwk.dmysql.common.ArrayBuilder;
 public class AggregationPerformanceTest extends PerformanceTestCase {
 
     @Override
-    public Integer loopCount() {
-        return 1000;
-    }
-
-    @Override
     public String[] beforeAll() {
         var queries = ArrayBuilder.create(new String[8]);
 
@@ -32,7 +27,7 @@ public class AggregationPerformanceTest extends PerformanceTestCase {
     public String[] loop() {
         var queries = ArrayBuilder.create(new String[8]);
 
-        queries.add("SELECT owner_id, AVG(mileage) as avg FROM cars GROUP BY owner_id");
+        queries.add("SELECT owner_id, SUM(mileage) as avg FROM cars GROUP BY owner_id");
 
         return queries.toArray();
     }
