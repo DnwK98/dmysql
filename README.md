@@ -4,6 +4,8 @@ Application for managing multiple MySql instances under one module.
 Applies sharding, node selection and transaction management.
 Executes distributed statements.
 
+![Interface](dmysql_example.jpg)
+
 ### Run in Docker
 
 ```bash
