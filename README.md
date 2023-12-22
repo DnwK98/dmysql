@@ -43,7 +43,7 @@ mvn -DskipTests dependency:resolve clean package
 Then app can be run using
 
 ```bash
-java -jar target distributed-mysql-1.0-jar-with-dependencies.jar
+java -jar target/distributed-mysql-1.0-jar-with-dependencies.jar
 ```
 or
 ```bash
